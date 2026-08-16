@@ -8,7 +8,7 @@
   <title>Painel — Lógicas PXG</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="admin.css?v=4.0">
+  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="admin.css?v=4.1">
 </head>
 <body class="admin-page admin-auth-check">
   <div class="noise"></div>
@@ -68,7 +68,7 @@
           </article>
         </div>
         <article class="access-card history-card">
-          <div class="access-card-head"><div><span class="section-kicker">HISTÓRICO</span><h2>Acessos por dia</h2></div><span class="post-count">Horário de Brasília</span></div>
+          <div class="access-card-head history-card-head"><div><span class="section-kicker">HISTÓRICO</span><h2>Acessos por dia</h2><span class="post-count">Horário de Brasília</span></div><div class="history-controls"><button class="history-arrow" id="historyPrevious" type="button" aria-label="Mês anterior">←</button><strong id="historyPeriod">Mês atual</strong><button class="history-arrow" id="historyNext" type="button" aria-label="Próximo mês">→</button><button class="mini-btn history-more" id="historyMore" type="button">Ver mais</button></div></div>
           <div class="access-table-wrap"><table class="access-table"><thead><tr><th>Data</th><th>Visitantes</th><th>Visualizações</th><th>Desempenho</th></tr></thead><tbody id="accessHistory"><tr><td colspan="4">Carregando histórico...</td></tr></tbody></table></div>
         </article>
       </section>
@@ -97,6 +97,6 @@
   <div class="image-lightbox admin-avatar-lightbox" id="adminAvatarLightbox" aria-hidden="true"><button class="image-lightbox-close" id="adminAvatarLightboxClose" aria-label="Fechar imagem">×</button><div class="image-lightbox-backdrop" data-close-admin-avatar></div><img id="adminAvatarLightboxImage" alt="Foto de perfil ampliada"></div>
   <div class="modal" id="previewModal" aria-hidden="true"><div class="modal-backdrop" data-close-preview></div><article class="article-modal"><button class="modal-close" id="previewClose">×</button><div class="article-hero" id="previewHero"></div><div class="article-content"><div class="article-meta" id="previewMeta"></div><h2 id="previewTitle"></h2><p class="article-summary" id="previewSummary"></p><div class="article-score" id="previewScore"></div><div class="article-text" id="previewText"></div></div></article></div>
   <div class="toast" id="toast"></div>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="admin.js?v=4.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="admin.js?v=4.1"></script>
 </body>
 </html>
