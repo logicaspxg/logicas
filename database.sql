@@ -53,10 +53,30 @@ create table if not exists public.comments (
   updated_at timestamptz not null default now()
 );
 
+-- DENÚNCIAS DE PERFIL
+create table if not exists public.profile_reports (
+  id uuid primary key default gen_random_uuid(),
+  reporter_id uuid not null constraint profile_reports_reporter_id_fkey references public.profiles(id) on delete cascade,
+  reported_profile_id uuid not null constraint profile_reports_reported_profile_id_fkey references public.profiles(id) on delete cascade,
+  source_comment_id bigint constraint profile_reports_source_comment_id_fkey references public.comments(id) on delete set null,
+  reason text not null check (reason in ('inappropriate_content','harassment','spam','impersonation','other')),
+  details text check (details is null or char_length(trim(details)) between 1 and 500),
+  status text not null default 'pending' check (status in ('pending','dismissed','actioned')),
+  created_at timestamptz not null default now(),
+  reviewed_at timestamptz,
+  reviewed_by uuid constraint profile_reports_reviewed_by_fkey references public.profiles(id) on delete set null,
+  constraint profile_reports_not_self check (reporter_id <> reported_profile_id)
+);
+
 create unique index if not exists profiles_username_unique_ci on public.profiles ((lower(trim(username))));
 create index if not exists idx_posts_published_at on public.posts(published_at desc);
 create index if not exists idx_comments_post_id on public.comments(post_id, created_at desc);
 create index if not exists idx_reactions_post_id on public.reactions(post_id);
+create index if not exists idx_profile_reports_status_created on public.profile_reports(status, created_at desc);
+create index if not exists idx_profile_reports_target on public.profile_reports(reported_profile_id, created_at desc);
+create index if not exists idx_profile_reports_source_comment on public.profile_reports(source_comment_id) where source_comment_id is not null;
+create index if not exists idx_profile_reports_reviewed_by on public.profile_reports(reviewed_by) where reviewed_by is not null;
+create unique index if not exists profile_reports_one_pending_per_target on public.profile_reports(reporter_id, reported_profile_id) where status = 'pending';
 
 -- Cria o perfil público automaticamente quando uma conta nasce no Auth.
 create or replace function public.handle_new_user()
@@ -149,6 +169,7 @@ alter table public.profiles enable row level security;
 alter table public.posts enable row level security;
 alter table public.reactions enable row level security;
 alter table public.comments enable row level security;
+alter table public.profile_reports enable row level security;
 
 -- PERFIS: nomes são públicos; cada usuário pode alterar apenas seus campos editáveis.
 drop policy if exists "profiles_public_read" on public.profiles;
@@ -188,6 +209,14 @@ create policy "comments_update_own" on public.comments for update to authenticat
 drop policy if exists "comments_delete_own_or_admin" on public.comments;
 create policy "comments_delete_own_or_admin" on public.comments for delete to authenticated using (auth.uid() = user_id or public.is_admin());
 
+-- DENÚNCIAS: usuário cria e consulta as próprias; administradores analisam todas.
+drop policy if exists "profile_reports_insert_own" on public.profile_reports;
+create policy "profile_reports_insert_own" on public.profile_reports for insert to authenticated with check ((select auth.uid()) = reporter_id and reporter_id <> reported_profile_id and status = 'pending');
+drop policy if exists "profile_reports_read_own_or_admin" on public.profile_reports;
+create policy "profile_reports_read_own_or_admin" on public.profile_reports for select to authenticated using ((select auth.uid()) = reporter_id or public.is_admin());
+drop policy if exists "profile_reports_admin_update" on public.profile_reports;
+create policy "profile_reports_admin_update" on public.profile_reports for update to authenticated using (public.is_admin()) with check (public.is_admin());
+
 -- Privilégios mínimos da API.
 revoke all on public.profiles from anon, authenticated;
 grant select on public.profiles to anon, authenticated;
@@ -201,6 +230,10 @@ grant select on public.comments to anon, authenticated;
 grant insert, delete on public.comments to authenticated;
 grant update (content) on public.comments to authenticated;
 grant usage, select on sequence public.comments_id_seq to authenticated;
+
+revoke all on public.profile_reports from anon, authenticated;
+grant select, insert on public.profile_reports to authenticated;
+grant update (status, reviewed_at, reviewed_by) on public.profile_reports to authenticated;
 
 -- ======================= CONTEÚDO INICIAL =======================
 insert into public.posts (slug,title,category,author,summary,content,score,icon,cover,featured,published,published_at)
@@ -263,3 +296,4 @@ create policy "post_images_admin_delete"
 on storage.objects for delete
 to authenticated
 using (bucket_id = 'post-images' and public.is_admin());
+

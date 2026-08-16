@@ -11,6 +11,9 @@
 .mini-btn:disabled{opacity:.55;cursor:not-allowed}
 
 .moderation-card{grid-column:1/-1!important}
+.reports-card{grid-column:1/-1!important}
+.report-item{align-items:start}
+.report-item .admin-post-copy p{line-height:1.65}
 
 /* V3.4.1 — administradores visíveis + busca sob demanda */
 .user-search-panel{margin-top:24px;padding-top:24px;border-top:1px solid var(--line)}
@@ -31,3 +34,4 @@
 .cover-image-current div{display:flex;flex-direction:column;gap:6px;min-width:0}
 .cover-image-current span{font-size:12px;color:#aab1bf;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cover-image-remove{align-self:flex-start}
+

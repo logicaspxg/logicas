@@ -10,6 +10,7 @@
   let activePost = null;
   let lastFocused = null;
   let reactionStats = {};
+  let reportTarget = null;
 
   const $ = id => document.getElementById(id);
   const postsGrid = $('postsGrid'), filtersEl = $('categorias'), searchInput = $('searchInput'), emptyState = $('emptyState'), featuredEl = $('featuredPost'), articleModal = $('articleModal'), authModal = $('authModal'), toast = $('toast');
@@ -96,14 +97,42 @@
     document.querySelectorAll('.reaction-btn').forEach(b=>b.classList.remove('selected'));
     const [{data:reactions,error:rErr},{data:comments,error:cErr}]=await Promise.all([
       db.from('reactions').select('user_id,reaction').eq('post_id',activePost.id),
-      db.from('comments').select('id,user_id,content,created_at,profiles(username)').eq('post_id',activePost.id).order('created_at',{ascending:false})
+      db.from('comments').select('id,user_id,content,created_at,profiles(username,avatar_url)').eq('post_id',activePost.id).order('created_at',{ascending:false})
     ]);
     if(rErr) console.error(rErr); if(cErr) console.error(cErr);
     const rs=reactions||[], cs=comments||[]; const likes=rs.filter(r=>r.reaction==='like').length, loves=rs.filter(r=>r.reaction==='love').length, funnies=rs.filter(r=>r.reaction==='funny').length;
     $('likeCount').textContent=likes; $('loveCount').textContent=loves; $('funnyCount').textContent=funnies; const total=likes+loves+funnies; $('reactionTotal').textContent=`${total} reaç${total===1?'ão':'ões'}`;
     const mine=currentUser&&rs.find(r=>r.user_id===currentUser.id); if(mine) document.querySelector(`[data-reaction="${mine.reaction}"]`)?.classList.add('selected');
     $('commentCount').textContent=`${cs.length} comentário${cs.length===1?'':'s'}`;
-    $('commentsList').innerHTML=cs.length?cs.map(c=>`<article class="comment"><div class="comment-avatar">${esc((c.profiles?.username||'?').slice(0,1).toUpperCase())}</div><div class="comment-body"><div><strong>${esc(c.profiles?.username||'Usuário')}</strong><time>${new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short'}).format(new Date(c.created_at))}</time></div><p>${esc(c.content)}</p>${currentUser&&(c.user_id===currentUser.id||currentProfile?.role==='admin')?`<button class="delete-comment" data-comment-id="${c.id}">Excluir</button>`:''}</div></article>`).join(''):'<div class="comment-empty">Ainda não há comentários. Um acontecimento raro na internet.</div>';
+    $('commentsList').innerHTML=cs.length?cs.map(c=>{
+      const username=c.profiles?.username||'Usuário';
+      const avatar=c.profiles?.avatar_url?`<img src="${esc(c.profiles.avatar_url)}" alt="Avatar de ${esc(username)}" loading="lazy">`:esc(username.slice(0,1).toUpperCase());
+      const canDelete=currentUser&&(c.user_id===currentUser.id||currentProfile?.role==='admin');
+      const canReport=!currentUser||c.user_id!==currentUser.id;
+      return `<article class="comment"><div class="comment-avatar">${avatar}</div><div class="comment-body"><div><strong>${esc(username)}</strong><time>${new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short'}).format(new Date(c.created_at))}</time></div><p>${esc(c.content)}</p><div class="comment-actions">${canDelete?`<button class="delete-comment" data-comment-id="${c.id}">Excluir</button>`:''}${canReport?`<button class="report-profile" data-report-user="${esc(c.user_id)}" data-report-comment="${c.id}" data-report-name="${esc(username)}">Denunciar perfil</button>`:''}</div></div></article>`;
+    }).join(''):'<div class="comment-empty">Ainda não há comentários. Um acontecimento raro na internet.</div>';
+  }
+
+  function openReport(targetId,username,commentId){
+    if(!currentUser)return openAuth();
+    if(targetId===currentUser.id)return showToast('Você não pode denunciar o próprio perfil.');
+    reportTarget={targetId,username,commentId:Number(commentId)||null};
+    $('reportTargetName').textContent=username;
+    $('reportReason').value='inappropriate_content'; $('reportDetails').value=''; $('reportMessage').textContent='';
+    $('reportModal').classList.add('open'); $('reportModal').setAttribute('aria-hidden','false'); document.body.classList.add('modal-open');
+  }
+  function closeReport(){
+    $('reportModal').classList.remove('open'); $('reportModal').setAttribute('aria-hidden','true'); reportTarget=null;
+    if(!articleModal.classList.contains('open')&&!authModal.classList.contains('open'))document.body.classList.remove('modal-open');
+  }
+  async function submitReport(e){
+    e.preventDefault(); if(!currentUser||!reportTarget)return;
+    const btn=$('reportSubmit'); btn.disabled=true; btn.textContent='Enviando...'; $('reportMessage').textContent='';
+    const payload={reporter_id:currentUser.id,reported_profile_id:reportTarget.targetId,source_comment_id:reportTarget.commentId,reason:$('reportReason').value,details:$('reportDetails').value.trim()||null};
+    const {error}=await db.from('profile_reports').insert(payload);
+    btn.disabled=false; btn.textContent='Enviar denúncia';
+    if(error){ $('reportMessage').textContent=error.code==='23505'?'Você já possui uma denúncia pendente sobre este perfil.':'Não foi possível enviar a denúncia agora.'; return; }
+    closeReport(); showToast('Denúncia enviada para análise.');
   }
 
   async function react(type){
@@ -260,9 +289,11 @@
   $('modalClose').addEventListener('click',closePost); articleModal.addEventListener('click',e=>{if(e.target.matches('[data-close-modal]'))closePost(); const hero=e.target.closest('#modalHero.has-image'); if(hero&&activePost?.cover_image_url)openImageLightbox(activePost.cover_image_url,`Capa da matéria: ${activePost.title}`);});
   $('imageLightboxClose').addEventListener('click',closeImageLightbox); $('imageLightbox').addEventListener('click',e=>{if(e.target.matches('[data-close-image]'))closeImageLightbox();});
   document.querySelectorAll('.reaction-btn').forEach(b=>b.addEventListener('click',()=>react(b.dataset.reaction))); $('commentForm').addEventListener('submit',submitComment);
-  $('commentsList').addEventListener('click',async e=>{const b=e.target.closest('[data-comment-id]');if(!b||!confirm('Excluir este comentário?'))return;const {error}=await db.from('comments').delete().eq('id',b.dataset.commentId);if(error)return showToast('Não foi possível excluir.');await loadCommunity();});
+  $('commentsList').addEventListener('click',async e=>{const report=e.target.closest('[data-report-user]');if(report){openReport(report.dataset.reportUser,report.dataset.reportName,report.dataset.reportComment);return;}const b=e.target.closest('[data-comment-id]');if(!b||!confirm('Excluir este comentário?'))return;const {error}=await db.from('comments').delete().eq('id',b.dataset.commentId);if(error)return showToast('Não foi possível excluir.');await loadCommunity();});
+  $('reportForm').addEventListener('submit',submitReport); $('reportClose').addEventListener('click',closeReport); $('reportModal').addEventListener('click',e=>{if(e.target.matches('[data-close-report]'))closeReport();});
   $('menuBtn').addEventListener('click',()=>$('mainNav').classList.toggle('open'));
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('imageLightbox').classList.contains('open'))closeImageLightbox();else if(authModal.classList.contains('open'))closeAuth();else if(articleModal.classList.contains('open'))closePost();}});
 
   loadPosts(); syncSession();
 })();
+

@@ -105,3 +105,18 @@
   .profile-avatar{width:120px;height:120px}
   .profile-shell{padding-top:26px}
 }
+
+/* V3.6 — avatares nos comentários e denúncias */
+.comment-avatar{overflow:hidden}
+.comment-avatar img{width:100%;height:100%;display:block;object-fit:cover}
+.comment-body>div:first-child{display:flex;justify-content:space-between;gap:12px}
+.comment-actions{display:flex!important;justify-content:flex-start!important;gap:12px!important;margin-top:5px}
+.delete-comment,.report-profile{border:0;background:none;font-size:10px;font-weight:800;padding:5px 0 0;cursor:pointer}
+.report-profile{color:#8892a3}
+.report-profile:hover{color:#ffb65c}
+.auth-form select,.auth-form textarea{background:#0c0e13;border:1px solid var(--line);border-radius:10px;color:#fff;padding:12px;font:500 14px Inter;outline:none}
+.auth-form textarea{resize:vertical}
+.auth-form select:focus,.auth-form textarea:focus{border-color:#4d5669}
+.report-intro{color:#9ca5b4;font-size:13px;line-height:1.6;margin:-8px 0 18px}
+.report-intro strong{color:#fff}
+

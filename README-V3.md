@@ -332,3 +332,15 @@ O banco agora possui uma restrição única case-insensitive. Portanto `Gabriel`
 
 ### Importante
 Não coloque a `secret key` ou `service_role` no JavaScript. O upload do painel usa a Publishable Key + sessão do administrador, e o Storage é protegido pelas policies da migração.
+
+## V3.6 — avatares nos comentários e denúncias de perfil
+
+1. No Supabase, abra **SQL Editor** e execute `MIGRATION-V3.6.sql` uma única vez.
+2. A foto escolhida em **Editar perfil** passa a aparecer automaticamente ao lado de todos os comentários do usuário. Perfis sem foto continuam mostrando a inicial do nome.
+3. Ao lado de comentários de outros usuários aparece **Denunciar perfil**. É necessário estar conectado para enviar a denúncia.
+4. A denúncia aceita motivo e uma descrição opcional de até 500 caracteres. O comentário usado para abrir a denúncia fica associado ao registro para dar contexto à moderação.
+5. O banco impede auto-denúncia e mais de uma denúncia pendente do mesmo autor contra o mesmo perfil.
+6. Administradores analisam os registros em **Denúncias pendentes** no painel e podem descartá-los ou marcá-los como resolvidos.
+
+As políticas RLS garantem que usuários comuns só criem denúncias em seu próprio nome. Apenas administradores podem visualizar a fila completa e alterar o status de moderação.
+
