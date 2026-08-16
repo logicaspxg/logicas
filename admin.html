@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Painel — Lógicas PXG</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-page admin-auth-check">
+  <div class="noise"></div>
+  <header class="topbar"><div class="container topbar-inner"><a class="brand" href="index.html"><span class="brand-mark">L</span><span class="brand-text">Lógicas <strong>PXG</strong> <small>EDITOR</small></span></a><div class="admin-top-actions"><a class="mini-btn" href="index.html">← Ver site</a><button class="mini-btn" id="logoutBtn" hidden>Sair</button></div></div></header>
+
+  <main class="admin-main">
+    <div class="container admin-shell" id="adminShell" hidden>
+      <section class="editor-card">
+        <div class="admin-title"><div><span class="section-kicker">NOVA INVESTIGAÇÃO</span><h1 id="formTitle">Criar matéria</h1></div><button class="mini-btn" type="button" id="clearBtn">Limpar</button></div>
+        <form id="postForm" class="editor-form">
+          <input type="hidden" id="editingId">
+          <label class="full">Título<input id="title" maxlength="180" required></label>
+          <label>Categoria<input id="category" maxlength="40" placeholder="Balanceamento" required></label>
+          <label>Autor<input id="author" maxlength="60" value="Redação Lógicas PXG" required></label>
+          <label>Índice de Lógica PXG (%)<input id="score" type="number" min="0" max="100" value="85" required></label>
+          <label>Ícone / emoji<input id="icon" maxlength="8" value="🧠"></label>
+          <label>Cor da capa<select id="cover"><option value="red">Vermelha</option><option value="yellow">Amarela</option><option value="blue">Azul</option><option value="purple">Roxa</option><option value="green">Verde</option><option value="dark">Escura</option></select></label>
+          <label class="full cover-upload-field">Imagem de capa <small>Opcional. JPG, PNG, WEBP ou GIF até 8 MB. A imagem será responsiva e poderá ser ampliada pelo leitor.</small>
+            <input id="coverImage" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
+            <input id="coverImageUrl" type="hidden">
+            <div id="coverImageCurrent" class="cover-image-current" hidden></div>
+          </label>
+          <label>Publicação<input id="publishedAt" type="datetime-local" required></label>
+          <label class="full">Resumo<textarea id="summary" maxlength="360" rows="3" required></textarea></label>
+          <label class="full">Matéria completa <small>Separe os parágrafos com uma linha em branco.</small><textarea id="content" rows="12" required></textarea></label>
+          <div class="checks full"><label><input type="checkbox" id="featured"> Definir como destaque</label><label><input type="checkbox" id="published" checked> Publicada</label></div>
+          <div class="editor-actions full"><button class="btn btn-secondary" type="button" id="previewBtn">Pré-visualizar</button><button class="btn btn-primary" type="submit" id="saveBtn">Publicar matéria</button></div>
+        </form>
+      </section>
+      <section class="admin-list-card"><div class="admin-title"><div><span class="section-kicker">BANCO DE DADOS</span><h2>Matérias</h2></div><span id="postCount" class="post-count"></span></div><div id="adminPostList" class="admin-post-list"></div></section>
+      <section class="admin-list-card moderation-card"><div class="admin-title"><div><span class="section-kicker">MODERAÇÃO</span><h2>Comentários recentes</h2></div></div><div id="moderationList" class="admin-post-list"></div></section>
+      <section class="admin-list-card users-card">
+        <div class="admin-title"><div><span class="section-kicker">ACESSOS</span><h2>Administradores</h2></div><span id="userCount" class="post-count"></span></div>
+        <p class="admin-help">A lista abaixo mostra somente administradores. Para promover outro usuário, pesquise pelo nome de usuário. Sua própria função não pode ser alterada pelo painel.</p>
+        <div id="userList" class="admin-post-list"></div>
+        <div class="user-search-panel">
+          <div class="admin-title user-search-title"><div><span class="section-kicker">LOCALIZAR USUÁRIO</span><h3>Promover usuário</h3></div></div>
+          <label class="admin-search-label" for="userSearch">Nome de usuário</label>
+          <div class="admin-user-search-row"><input id="userSearch" type="search" maxlength="24" autocomplete="off" placeholder="Ex.: SamuraiY"><button class="mini-btn" type="button" id="userSearchBtn">Pesquisar</button></div>
+          <p class="admin-help user-search-help">Digite pelo menos 2 caracteres. Usuários comuns só aparecem nos resultados da pesquisa.</p>
+          <div id="userSearchStatus" class="user-search-status"></div>
+          <div id="userSearchResults" class="admin-post-list"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div class="modal" id="previewModal" aria-hidden="true"><div class="modal-backdrop" data-close-preview></div><article class="article-modal"><button class="modal-close" id="previewClose">×</button><div class="article-hero" id="previewHero"></div><div class="article-content"><div class="article-meta" id="previewMeta"></div><h2 id="previewTitle"></h2><p class="article-summary" id="previewSummary"></p><div class="article-score" id="previewScore"></div><div class="article-text" id="previewText"></div></div></article></div>
+  <div class="toast" id="toast"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lógicas PXG — Tentando entender o inexplicável</title>
+  <meta name="description" content="Blog independente de humor e sátira sobre decisões inexplicáveis do universo PXG." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="noise"></div>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="#top" aria-label="Lógicas PXG"><span class="brand-mark">L</span><span class="brand-text">Lógicas <strong>PXG</strong></span></a>
+      <nav class="nav" id="mainNav" aria-label="Navegação principal">
+        <a href="#materias">Matérias</a><a href="#categorias">Categorias</a><a href="#ranking">Ranking da lógica</a><a href="#sobre">Sobre</a>
+      </nav>
+      <div class="account-area">
+        <button class="account-btn" id="accountBtn">Entrar</button>
+        <div class="account-menu" id="accountMenu" hidden>
+          <div class="account-menu-head"><strong id="accountName">Usuário</strong><small id="accountEmail"></small></div>
+          <button id="logoutBtn">Sair</button>
+        </div>
+        <button class="menu-btn" id="menuBtn" aria-label="Abrir menu">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero"><div class="container hero-grid">
+      <div class="hero-copy"><div class="eyebrow">Jornalismo investigativo que ninguém pediu</div><h1>Tentando entender o que <span>não foi feito para ser entendido.</span></h1><p>Um blog de sátiras, teorias e análises completamente sérias sobre decisões completamente inexplicáveis do PXG.</p>
+        <div class="hero-actions"><a class="btn btn-primary" href="#materias">Ler absurdos</a><button class="btn btn-secondary" id="randomPostBtn">Me surpreenda</button></div>
+        <div class="hero-metrics"><div><strong>100%</strong><span>independente</span></div><div><strong>0%</strong><span>explicável</span></div><div><strong>∞</strong><span>PXG moments</span></div></div>
+      </div>
+      <article class="featured-card clickable" id="featuredPost" tabindex="0" role="button" aria-label="Abrir matéria em destaque"></article>
+    </div></section>
+
+    <section class="ticker" aria-label="Últimas absurdidades"><div class="ticker-track"><span>BREAKING: economia foi balanceada retirando dinheiro de quem não tinha</span><span>•</span><span>CRAFT: novo item requer materiais do item que você está tentando craftar</span><span>•</span><span>NERF: habilidade corrigida para funcionar menos</span><span>•</span><span>EVENTO: conteúdo limitado disponível durante seu horário de trabalho</span><span>•</span><span>BREAKING: economia foi balanceada retirando dinheiro de quem não tinha</span><span>•</span><span>CRAFT: novo item requer materiais do item que você está tentando craftar</span></div></section>
+
+    <section class="section" id="materias"><div class="container"><div class="section-head"><div><span class="section-kicker">ARQUIVO CONFIDENCIAL</span><h2>Últimas matérias</h2></div><div class="search-wrap"><input type="search" id="searchInput" placeholder="Buscar uma lógica inexplicável..." aria-label="Buscar matérias" /></div></div><div class="filters" id="categorias"></div><div class="posts-grid" id="postsGrid"></div><div class="empty-state" id="emptyState">Nenhuma lógica encontrada. Isso, por si só, já é suspeito.</div></div></section>
+
+    <section class="section ranking-section" id="ranking"><div class="container ranking-grid"><div><span class="section-kicker">METODOLOGIA CIENTÍFICA*</span><h2>Índice de Lógica PXG™</h2><p class="lead">Nossa escala editorial mede o quanto uma decisão desafia matemática, bom senso e, eventualmente, as leis da física.</p><small>*Metodologia inventada cinco minutos antes da publicação.</small></div><div class="scale-card"><div class="scale-item"><span class="dot d1"></span><div><strong>0–20%</strong><p>Surpreendentemente lógico</p></div></div><div class="scale-item"><span class="dot d2"></span><div><strong>21–50%</strong><p>Começou a ficar estranho</p></div></div><div class="scale-item"><span class="dot d3"></span><div><strong>51–80%</strong><p>PXG moment</p></div></div><div class="scale-item"><span class="dot d4"></span><div><strong>81–100%</strong><p>Nem Arceus explica</p></div></div></div></div></section>
+
+    <section class="section quote-section"><div class="container"><blockquote><span>“</span><p>Você precisa do item A para fabricar o item B. Para conseguir o item A, precisa do item B.</p><footer><strong>Conclusão:</strong> skill issue.</footer></blockquote></div></section>
+    <section class="section" id="sobre"><div class="container about-card"><div><span class="section-kicker">SOBRE O PROJETO</span><h2>Sério na aparência.<br>Duvidoso no conteúdo.</h2></div><p>O Lógicas PXG é um projeto independente de humor e sátira criado para comentar situações curiosas, absurdas ou simplesmente inexplicáveis vividas pela comunidade. Não possuímos vínculo oficial com PXG. Personagens, nomes e marcas pertencem aos seus respectivos responsáveis.</p></div></section>
+  </main>
+
+  <footer class="footer"><div class="container footer-inner"><div><a class="brand brand-footer" href="#top"><span class="brand-mark">L</span><span class="brand-text">Lógicas <strong>PXG</strong></span></a><p>Analisando decisões que ninguém pediu desde 2026.</p></div><p class="disclaimer">Projeto independente de humor e sátira. Não afiliado oficialmente à PXG.</p></div></footer>
+
+  <div class="modal" id="articleModal" aria-hidden="true"><div class="modal-backdrop" data-close-modal></div><article class="article-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><button class="modal-close" id="modalClose" aria-label="Fechar matéria">×</button><div class="article-hero" id="modalHero"></div><div class="article-content"><div class="article-meta" id="modalMeta"></div><h2 id="modalTitle"></h2><p class="article-summary" id="modalSummary"></p><div class="article-score" id="modalScore"></div><div class="article-text" id="modalText"></div>
+    <section class="community-box"><div class="community-title"><div><span class="section-kicker">TRIBUNAL DA COMUNIDADE</span><h3>Qual foi o nível dessa lógica?</h3></div><span id="reactionTotal" class="reaction-total"></span></div><div class="reaction-row"><button class="reaction-btn" data-reaction="like">👍 <span>Curtir</span> <b id="likeCount">0</b></button><button class="reaction-btn" data-reaction="love">❤️ <span>Amei</span> <b id="loveCount">0</b></button><button class="reaction-btn" data-reaction="funny">😂 <span>Engraçado</span> <b id="funnyCount">0</b></button></div><p class="login-hint" id="interactionHint"></p><div class="comments-wrap"><div class="comments-head"><h3>Comentários</h3><span id="commentCount">0 comentários</span></div><form id="commentForm" class="comment-form"><textarea id="commentInput" maxlength="800" placeholder="Deixe sua análise completamente científica..." required></textarea><div><small>Máximo de 800 caracteres.</small><button class="btn btn-primary" type="submit">Comentar</button></div></form><div id="commentsList" class="comments-list"></div></div></section>
+    <div class="article-end">— Fim da investigação. A lógica continua desaparecida.</div></div></article></div>
+
+  <div class="modal" id="authModal" aria-hidden="true"><div class="modal-backdrop" data-close-auth></div><section class="auth-card" role="dialog" aria-modal="true"><button class="modal-close" id="authClose" aria-label="Fechar">×</button><div class="auth-brand"><span class="brand-mark">L</span><div><strong>Lógicas PXG</strong><small>Área da comunidade</small></div></div><div class="auth-tabs"><button class="active" data-auth-tab="login">Entrar</button><button data-auth-tab="signup">Criar conta</button></div>
+    <form id="loginForm" class="auth-form"><label>E-mail<input type="email" id="loginEmail" required autocomplete="email"></label><label>Senha<input type="password" id="loginPassword" required autocomplete="current-password"></label><button class="btn btn-primary" id="loginSubmitBtn" type="submit">Entrar</button><small id="loginSecurityHint" class="login-security-hint">Proteção contra tentativas repetidas ativa.</small></form>
+    <form id="signupForm" class="auth-form" hidden><label>Nome de usuário<input type="text" id="signupUsername" minlength="3" maxlength="24" required></label><label>E-mail<input type="email" id="signupEmail" required autocomplete="email"></label><label>Senha<input type="password" id="signupPassword" minlength="8" required autocomplete="new-password"></label><button class="btn btn-primary" type="submit">Criar minha conta</button><small>Ao criar uma conta, seu e-mail não fica público. Nos comentários aparece apenas seu nome de usuário.</small></form><p class="auth-message" id="authMessage"></p></section></div>
+
+
+  <div class="image-lightbox" id="imageLightbox" aria-hidden="true">
+    <button class="image-lightbox-close" id="imageLightboxClose" aria-label="Fechar imagem">×</button>
+    <div class="image-lightbox-backdrop" data-close-image></div>
+    <img id="imageLightboxImg" alt="Imagem ampliada da matéria">
+  </div>
+  <div class="toast" id="toast"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="posts.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
