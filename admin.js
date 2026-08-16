@@ -34,7 +34,7 @@
       $('logoutBtn').hidden=false;
       setDefaultDate();
       if(REPORTS_ENABLED)$('reportsCard').hidden=false;
-      await Promise.all([loadPosts(),loadComments(),REPORTS_ENABLED?loadReports():Promise.resolve(),loadUsers()]);
+      await Promise.all([loadPosts(),loadComments(),loadStories(),REPORTS_ENABLED?loadReports():Promise.resolve(),loadUsers()]);
     } catch (err) {
       console.error('Falha ao validar acesso administrativo:', err);
       deny();
@@ -91,6 +91,17 @@
 
   async function loadComments(){const {data,error}=await db.from('comments').select('id,user_id,post_id,content,created_at,profiles(username),posts(title)').order('created_at',{ascending:false}).limit(40);if(error){console.error(error);return}$('moderationList').innerHTML=(data||[]).length?data.map(c=>`<article class="admin-post-item"><div class="admin-post-icon cover-dark">💬</div><div class="admin-post-copy"><div class="post-meta"><span>${esc(c.profiles?.username||'Usuário')}</span><time>${new Date(c.created_at).toLocaleString('pt-BR')}</time></div><h3>${esc(c.posts?.title||'Matéria')}</h3><p>${esc(c.content)}</p></div><div class="admin-item-actions"><button class="mini-btn danger" data-mod-delete="${c.id}">Excluir</button></div></article>`).join(''):'<div class="empty-state" style="display:block">Nenhum comentário.</div>'}
 
+  const storyStatusLabel={new:'Nova',read:'Lida',used:'Aproveitada',archived:'Arquivada'};
+  async function loadStories(){
+    const {data,error}=await db.from('story_submissions').select('id,user_id,subject,story,status,created_at,profiles!story_submissions_user_id_fkey(username)').order('created_at',{ascending:false}).limit(100);
+    if(error){console.error(error);$('storyList').innerHTML='<div class="empty-state" style="display:block">A fila ficará disponível após aplicar a migração V3.7.</div>';return;}
+    const stories=data||[], fresh=stories.filter(s=>s.status==='new').length;
+    $('storyCount').textContent=`${stories.length} história${stories.length===1?'':'s'}`;$('storyTabCount').textContent=fresh?`(${fresh})`:'';
+    $('storyList').innerHTML=stories.length?stories.map(s=>`<article class="admin-post-item story-item"><div class="admin-post-icon ${s.status==='new'?'cover-yellow':'cover-dark'}">💡</div><div class="admin-post-copy"><div class="post-meta"><span>${esc(storyStatusLabel[s.status]||s.status)}</span><time>${new Date(s.created_at).toLocaleString('pt-BR')}</time></div><h3>${esc(s.subject)}</h3><p><strong>${esc(s.profiles?.username||'Usuário removido')}:</strong> ${esc(s.story)}</p></div><div class="admin-item-actions">${s.status==='new'?`<button class="mini-btn" data-story-status="read" data-story-id="${s.id}">Marcar lida</button>`:''}${s.status!=='used'?`<button class="mini-btn" data-story-status="used" data-story-id="${s.id}">Aproveitar</button>`:''}${s.status!=='archived'?`<button class="mini-btn danger" data-story-status="archived" data-story-id="${s.id}">Arquivar</button>`:''}</div></article>`).join(''):'<div class="empty-state" style="display:block">Nenhuma história recebida.</div>';
+  }
+
+  function setAdminTab(tab){document.querySelectorAll('[data-admin-tab]').forEach(b=>{const active=b.dataset.adminTab===tab;b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active));});document.querySelectorAll('[data-admin-panel]').forEach(p=>p.hidden=p.dataset.adminPanel!==tab);}
+
   const reportReasonLabel={inappropriate_content:'Conteúdo impróprio',harassment:'Assédio ou ameaça',spam:'Spam',impersonation:'Falsidade ideológica',other:'Outro motivo'};
   async function loadReports(){
     const {data,error}=await db.from('profile_reports').select('id,reported_profile_id,source_comment_id,reason,details,status,created_at,reported:profiles!profile_reports_reported_profile_id_fkey(username),reporter:profiles!profile_reports_reporter_id_fkey(username),comments(content)').eq('status','pending').order('created_at',{ascending:false}).limit(100);
@@ -137,6 +148,8 @@
   $('postForm').addEventListener('submit',save);$('clearBtn').addEventListener('click',clearForm);$('previewBtn').addEventListener('click',preview);$('previewClose').addEventListener('click',closePreview);$('previewModal').addEventListener('click',e=>{if(e.target.matches('[data-close-preview]'))closePreview()});
   $('adminPostList').addEventListener('click',async e=>{const edit=e.target.closest('[data-edit]'),del=e.target.closest('[data-delete]');if(edit){const p=posts.find(x=>x.id===edit.dataset.edit);if(p)fill(p)}if(del&&confirm('Excluir esta matéria e seus comentários/reações?')){const {error}=await db.from('posts').delete().eq('id',del.dataset.delete);if(error)return showToast(error.message);showToast('Matéria excluída.');await Promise.all([loadPosts(),loadComments()])}});
   $('moderationList').addEventListener('click',async e=>{const b=e.target.closest('[data-mod-delete]');if(!b||!confirm('Excluir este comentário?'))return;const {error}=await db.from('comments').delete().eq('id',b.dataset.modDelete);if(error)return showToast(error.message);showToast('Comentário removido.');await loadComments()});
+  document.querySelectorAll('[data-admin-tab]').forEach(b=>b.addEventListener('click',()=>setAdminTab(b.dataset.adminTab)));
+  $('storyList').addEventListener('click',async e=>{const b=e.target.closest('[data-story-status]');if(!b)return;b.disabled=true;const {error}=await db.from('story_submissions').update({status:b.dataset.storyStatus,reviewed_at:new Date().toISOString(),reviewed_by:currentAdminId}).eq('id',b.dataset.storyId);if(error){b.disabled=false;return showToast(error.message||'Não foi possível atualizar a história.');}showToast('História atualizada.');await loadStories();});
   $('reportList').addEventListener('click',async e=>{const b=e.target.closest('[data-report-status]');if(!b)return;const verb=b.dataset.reportStatus==='actioned'?'marcar como resolvida':'descartar';if(!confirm(`Deseja ${verb} esta denúncia?`))return;b.disabled=true;const {error}=await db.from('profile_reports').update({status:b.dataset.reportStatus,reviewed_at:new Date().toISOString(),reviewed_by:currentAdminId}).eq('id',b.dataset.reportId);if(error){b.disabled=false;return showToast(error.message||'Não foi possível atualizar a denúncia.');}showToast('Denúncia atualizada.');await loadReports();});
   async function handleRoleChange(e){
     const b=e.target.closest('[data-role-user]'); if(!b)return;

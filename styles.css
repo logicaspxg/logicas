@@ -120,3 +120,9 @@
 .report-intro{color:#9ca5b4;font-size:13px;line-height:1.6;margin:-8px 0 18px}
 .report-intro strong{color:#fff}
 
+/* V3.7 — balão de histórias */
+.story-bubble{position:fixed;right:24px;bottom:24px;z-index:70;display:flex;align-items:center;gap:9px;border:1px solid rgba(255,209,60,.45);border-radius:999px;background:var(--accent);color:#111;padding:13px 18px;box-shadow:0 14px 42px rgba(0,0,0,.42);font:800 13px Inter;cursor:pointer;transition:.2s}
+.story-bubble:hover{transform:translateY(-3px);box-shadow:0 18px 48px rgba(0,0,0,.5)}.story-bubble span{font-size:19px}.story-card{width:min(520px,calc(100% - 28px))}.story-intro{margin:-8px 0 18px;color:#929baa;font-size:12px}.story-intro strong{color:#fff}.story-card textarea{min-height:150px}.story-card .brand-mark{font-size:18px;transform:none}
+.story-bubble~.toast{bottom:84px}
+@media(max-width:620px){.story-bubble{right:14px;bottom:14px;padding:13px}.story-bubble strong{display:none}.story-bubble~.toast{right:14px;bottom:72px;left:14px;text-align:center}}
+

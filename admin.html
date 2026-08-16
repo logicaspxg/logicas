@@ -16,6 +16,13 @@
 
   <main class="admin-main">
     <div class="container admin-shell" id="adminShell" hidden>
+      <nav class="admin-tabs" aria-label="Seções do painel" role="tablist">
+        <button class="admin-tab active" type="button" role="tab" aria-selected="true" data-admin-tab="posts">Matérias</button>
+        <button class="admin-tab" type="button" role="tab" aria-selected="false" data-admin-tab="comments">Comentários</button>
+        <button class="admin-tab" type="button" role="tab" aria-selected="false" data-admin-tab="stories">Histórias recebidas <span id="storyTabCount"></span></button>
+        <button class="admin-tab" type="button" role="tab" aria-selected="false" data-admin-tab="users">Administradores</button>
+      </nav>
+      <div class="admin-tab-panel admin-posts-panel" data-admin-panel="posts">
       <section class="editor-card">
         <div class="admin-title"><div><span class="section-kicker">NOVA INVESTIGAÇÃO</span><h1 id="formTitle">Criar matéria</h1></div><button class="mini-btn" type="button" id="clearBtn">Limpar</button></div>
         <form id="postForm" class="editor-form">
@@ -39,9 +46,11 @@
         </form>
       </section>
       <section class="admin-list-card"><div class="admin-title"><div><span class="section-kicker">BANCO DE DADOS</span><h2>Matérias</h2></div><span id="postCount" class="post-count"></span></div><div id="adminPostList" class="admin-post-list"></div></section>
-      <section class="admin-list-card moderation-card"><div class="admin-title"><div><span class="section-kicker">MODERAÇÃO</span><h2>Comentários recentes</h2></div></div><div id="moderationList" class="admin-post-list"></div></section>
+      </div>
+      <section class="admin-list-card moderation-card admin-tab-panel" data-admin-panel="comments" hidden><div class="admin-title"><div><span class="section-kicker">MODERAÇÃO</span><h2>Comentários recentes</h2></div></div><div id="moderationList" class="admin-post-list"></div></section>
+      <section class="admin-list-card stories-card admin-tab-panel" data-admin-panel="stories" hidden><div class="admin-title"><div><span class="section-kicker">PAUTAS DA COMUNIDADE</span><h2>Histórias recebidas</h2></div><span id="storyCount" class="post-count"></span></div><p class="admin-help">Sugestões enviadas por usuários autenticados. Marque como lida, aproveitada ou arquivada para organizar a fila.</p><div id="storyList" class="admin-post-list"></div></section>
       <section class="admin-list-card reports-card" id="reportsCard" hidden><div class="admin-title"><div><span class="section-kicker">SEGURANÇA DA COMUNIDADE</span><h2>Denúncias pendentes</h2></div><span id="reportCount" class="post-count"></span></div><p class="admin-help">Analise o perfil, o motivo e o comentário de origem antes de decidir. “Resolver” registra que uma providência foi tomada; “Descartar” encerra a denúncia sem ação.</p><div id="reportList" class="admin-post-list"></div></section>
-      <section class="admin-list-card users-card">
+      <section class="admin-list-card users-card admin-tab-panel" data-admin-panel="users" hidden>
         <div class="admin-title"><div><span class="section-kicker">ACESSOS</span><h2>Administradores</h2></div><span id="userCount" class="post-count"></span></div>
         <p class="admin-help">A lista abaixo mostra somente administradores. Para promover outro usuário, pesquise pelo nome de usuário. Sua própria função não pode ser alterada pelo painel.</p>
         <div id="userList" class="admin-post-list"></div>

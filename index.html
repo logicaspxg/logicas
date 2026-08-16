@@ -69,6 +69,8 @@
     <div class="image-lightbox-backdrop" data-close-image></div>
     <img id="imageLightboxImg" alt="Imagem ampliada da matéria">
   </div>
+  <button class="story-bubble" id="storyBubble" type="button" aria-haspopup="dialog"><span aria-hidden="true">💡</span><strong>Envie sua história</strong></button>
+  <div class="modal" id="storyModal" aria-hidden="true"><div class="modal-backdrop" data-close-story></div><section class="auth-card story-card" role="dialog" aria-modal="true" aria-labelledby="storyTitle"><button class="modal-close" id="storyClose" aria-label="Fechar">×</button><div class="auth-brand"><span class="brand-mark">💡</span><div><strong id="storyTitle">Envie sua história</strong><small>Sua ideia pode virar uma matéria</small></div></div><p class="story-intro">Enviando como <strong id="storyProfileName">seu perfil</strong>. Não exibimos seu e-mail.</p><form id="storyForm" class="auth-form"><label>Qual é o assunto?<input id="storySubject" minlength="3" maxlength="120" required placeholder="Resuma a pauta em uma frase"></label><label>Conte sua história<textarea id="storyContent" minlength="20" maxlength="4000" rows="8" required placeholder="Inclua os detalhes que ajudam a entender a história."></textarea></label><button class="btn btn-primary" id="storySubmit" type="submit">Enviar para a redação</button></form><p class="auth-message" id="storyMessage" aria-live="polite"></p></section></div>
   <div class="toast" id="toast"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
