@@ -32,7 +32,7 @@
       $('adminShell').hidden=false;
       $('logoutBtn').hidden=false;
       setDefaultDate();
-      await Promise.all([loadPosts(),loadComments(),loadUsers()]);
+      await Promise.all([loadPosts(),loadComments(),loadReports(),loadUsers()]);
     } catch (err) {
       console.error('Falha ao validar acesso administrativo:', err);
       deny();
@@ -89,6 +89,14 @@
 
   async function loadComments(){const {data,error}=await db.from('comments').select('id,user_id,post_id,content,created_at,profiles(username),posts(title)').order('created_at',{ascending:false}).limit(40);if(error){console.error(error);return}$('moderationList').innerHTML=(data||[]).length?data.map(c=>`<article class="admin-post-item"><div class="admin-post-icon cover-dark">💬</div><div class="admin-post-copy"><div class="post-meta"><span>${esc(c.profiles?.username||'Usuário')}</span><time>${new Date(c.created_at).toLocaleString('pt-BR')}</time></div><h3>${esc(c.posts?.title||'Matéria')}</h3><p>${esc(c.content)}</p></div><div class="admin-item-actions"><button class="mini-btn danger" data-mod-delete="${c.id}">Excluir</button></div></article>`).join(''):'<div class="empty-state" style="display:block">Nenhum comentário.</div>'}
 
+  const reportReasonLabel={inappropriate_content:'Conteúdo impróprio',harassment:'Assédio ou ameaça',spam:'Spam',impersonation:'Falsidade ideológica',other:'Outro motivo'};
+  async function loadReports(){
+    const {data,error}=await db.from('profile_reports').select('id,reported_profile_id,source_comment_id,reason,details,status,created_at,reported:profiles!profile_reports_reported_profile_id_fkey(username),reporter:profiles!profile_reports_reporter_id_fkey(username),comments(content)').eq('status','pending').order('created_at',{ascending:false}).limit(100);
+    if(error){console.error(error);$('reportList').innerHTML='<div class="empty-state" style="display:block">Execute a MIGRATION-V3.6.sql para ativar as denúncias.</div>';return;}
+    const reports=data||[]; $('reportCount').textContent=`${reports.length} pendente${reports.length===1?'':'s'}`;
+    $('reportList').innerHTML=reports.length?reports.map(r=>`<article class="admin-post-item report-item"><div class="admin-post-icon cover-red">⚠️</div><div class="admin-post-copy"><div class="post-meta"><span>${esc(reportReasonLabel[r.reason]||r.reason)}</span><time>${new Date(r.created_at).toLocaleString('pt-BR')}</time></div><h3>${esc(r.reported?.username||'Perfil removido')}</h3><p><strong>Denunciado por:</strong> ${esc(r.reporter?.username||'Usuário')}<br>${r.details?`<strong>Detalhes:</strong> ${esc(r.details)}<br>`:''}${r.comments?.content?`<strong>Comentário relacionado:</strong> “${esc(r.comments.content)}”`:''}</p></div><div class="admin-item-actions"><button class="mini-btn" data-report-status="dismissed" data-report-id="${r.id}">Descartar</button><button class="mini-btn danger" data-report-status="actioned" data-report-id="${r.id}">Resolver</button></div></article>`).join(''):'<div class="empty-state" style="display:block">Nenhuma denúncia pendente.</div>';
+  }
+
   function userCard(u,{searchResult=false}={}){
     const self=u.id===currentAdminId; const isAdmin=u.role==='admin';
     const action=self?'<span class="self-role">Seu acesso</span>':`<button class="mini-btn ${isAdmin?'danger':''}" data-role-user="${u.id}" data-role-target="${isAdmin?'user':'admin'}">${isAdmin?'Remover admin':'Tornar admin'}</button>`;
@@ -127,6 +135,7 @@
   $('postForm').addEventListener('submit',save);$('clearBtn').addEventListener('click',clearForm);$('previewBtn').addEventListener('click',preview);$('previewClose').addEventListener('click',closePreview);$('previewModal').addEventListener('click',e=>{if(e.target.matches('[data-close-preview]'))closePreview()});
   $('adminPostList').addEventListener('click',async e=>{const edit=e.target.closest('[data-edit]'),del=e.target.closest('[data-delete]');if(edit){const p=posts.find(x=>x.id===edit.dataset.edit);if(p)fill(p)}if(del&&confirm('Excluir esta matéria e seus comentários/reações?')){const {error}=await db.from('posts').delete().eq('id',del.dataset.delete);if(error)return showToast(error.message);showToast('Matéria excluída.');await Promise.all([loadPosts(),loadComments()])}});
   $('moderationList').addEventListener('click',async e=>{const b=e.target.closest('[data-mod-delete]');if(!b||!confirm('Excluir este comentário?'))return;const {error}=await db.from('comments').delete().eq('id',b.dataset.modDelete);if(error)return showToast(error.message);showToast('Comentário removido.');await loadComments()});
+  $('reportList').addEventListener('click',async e=>{const b=e.target.closest('[data-report-status]');if(!b)return;const verb=b.dataset.reportStatus==='actioned'?'marcar como resolvida':'descartar';if(!confirm(`Deseja ${verb} esta denúncia?`))return;b.disabled=true;const {error}=await db.from('profile_reports').update({status:b.dataset.reportStatus,reviewed_at:new Date().toISOString(),reviewed_by:currentAdminId}).eq('id',b.dataset.reportId);if(error){b.disabled=false;return showToast(error.message||'Não foi possível atualizar a denúncia.');}showToast('Denúncia atualizada.');await loadReports();});
   async function handleRoleChange(e){
     const b=e.target.closest('[data-role-user]'); if(!b)return;
     const user=[...users,...userSearchResults].find(u=>u.id===b.dataset.roleUser); if(!user)return;
@@ -155,3 +164,4 @@
   $('logoutBtn').addEventListener('click',async()=>{await db.auth.signOut();location.href='index.html'});
   boot();
 })();
+
