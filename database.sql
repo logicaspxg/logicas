@@ -232,7 +232,7 @@ grant update (content) on public.comments to authenticated;
 grant usage, select on sequence public.comments_id_seq to authenticated;
 
 revoke all on public.profile_reports from anon, authenticated;
-grant select, insert on public.profile_reports to authenticated;
+grant select on public.profile_reports to authenticated;
 grant update (status, reviewed_at, reviewed_by) on public.profile_reports to authenticated;
 
 -- ======================= CONTEÚDO INICIAL =======================

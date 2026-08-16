@@ -1,5 +1,6 @@
 (() => {
   const cfg=window.LOGICAS_PXG_CONFIG||{};
+  const REPORTS_ENABLED=false; // Reative junto com o GRANT INSERT documentado na migração V3.6.1.
   const configured=cfg.supabaseUrl&&cfg.supabaseAnonKey&&!cfg.supabaseUrl.includes('COLE_AQUI')&&!cfg.supabaseAnonKey.includes('COLE_AQUI');
   const db=configured&&window.supabase?window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey):null;
   const $=id=>document.getElementById(id); const esc=(v='')=>String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[c])); const coverMap={red:'cover-red',yellow:'cover-yellow',blue:'cover-blue',purple:'cover-purple',green:'cover-green',dark:'cover-dark'};
@@ -32,7 +33,8 @@
       $('adminShell').hidden=false;
       $('logoutBtn').hidden=false;
       setDefaultDate();
-      await Promise.all([loadPosts(),loadComments(),loadReports(),loadUsers()]);
+      if(REPORTS_ENABLED)$('reportsCard').hidden=false;
+      await Promise.all([loadPosts(),loadComments(),REPORTS_ENABLED?loadReports():Promise.resolve(),loadUsers()]);
     } catch (err) {
       console.error('Falha ao validar acesso administrativo:', err);
       deny();

@@ -344,3 +344,13 @@ Não coloque a `secret key` ou `service_role` no JavaScript. O upload do painel 
 
 As políticas RLS garantem que usuários comuns só criem denúncias em seu próprio nome. Apenas administradores podem visualizar a fila completa e alterar o status de moderação.
 
+### V3.6.1 — denúncias desativadas
+
+As denúncias estão preservadas para possível uso futuro, mas não aparecem no site nem no painel e novos registros são bloqueados no banco. Para instalações já atualizadas, execute `MIGRATION-V3.6.1-DISABLE-REPORTS.sql`.
+
+Para reativar, troque `REPORTS_ENABLED` para `true` em `script.js` e `admin.js` e execute no Supabase:
+
+```sql
+grant insert on public.profile_reports to authenticated;
+```
+
