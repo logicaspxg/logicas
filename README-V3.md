@@ -354,3 +354,9 @@ Para reativar, troque `REPORTS_ENABLED` para `true` em `script.js` e `admin.js` 
 grant insert on public.profile_reports to authenticated;
 ```
 
+### V3.8 — gestão protegida de perfis
+
+No painel administrativo, o botão **Gerenciar** abre os dados do perfil. Alterações de nome, bio, foto ou função são enviadas para a Edge Function `admin-update-profile`, que confirma a senha do administrador atual antes de gravar. A função impede auto-rebaixamento e remoção do último administrador.
+
+Execute `MIGRATION-V3.8-ADMIN-PROFILE-MANAGEMENT.sql` antes de implantar a função. A migração cria o histórico `admin_profile_audit` e remove a política que permitia edições administrativas diretamente pelo navegador. A senha nunca é armazenada ou incluída no histórico.
+

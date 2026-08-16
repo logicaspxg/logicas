@@ -9,6 +9,7 @@
   let users=[];
   let userSearchResults=[];
   let currentAdminId=null;
+  let managedProfile=null;
   const MAX_COVER_BYTES=8*1024*1024;
   const ALLOWED_COVER_TYPES=new Set(['image/jpeg','image/png','image/webp','image/gif']);
 
@@ -112,14 +113,14 @@
 
   function userCard(u,{searchResult=false}={}){
     const self=u.id===currentAdminId; const isAdmin=u.role==='admin';
-    const action=self?'<span class="self-role">Seu acesso</span>':`<button class="mini-btn ${isAdmin?'danger':''}" data-role-user="${u.id}" data-role-target="${isAdmin?'user':'admin'}">${isAdmin?'Remover admin':'Tornar admin'}</button>`;
+    const action=`<button class="mini-btn" data-manage-user="${u.id}">${self?'Meu perfil':'Gerenciar'}</button>`;
     const avatar=u.avatar_url?`<img src="${esc(u.avatar_url)}" alt="Foto de perfil de ${esc(u.username)}" loading="lazy">`:(isAdmin?'🛡️':'👤');
-    return `<article class="admin-post-item user-item"><div class="admin-post-icon user-avatar ${isAdmin?'cover-yellow':'cover-dark'}">${avatar}</div><div class="admin-post-copy"><div class="post-meta"><span>${isAdmin?'ADMINISTRADOR':'USUÁRIO'}</span><time>${new Date(u.created_at).toLocaleDateString('pt-BR')}</time>${self?'<b>VOCÊ</b>':''}${searchResult&&isAdmin?'<b>JÁ É ADMIN</b>':''}</div><h3>${esc(u.username)}</h3><p>${isAdmin?'Pode publicar, moderar e gerenciar acessos.':'Pode reagir e comentar nas matérias.'}</p></div><div class="admin-item-actions">${action}</div></article>`;
+    return `<article class="admin-post-item user-item" data-manage-user="${u.id}"><div class="admin-post-icon user-avatar ${isAdmin?'cover-yellow':'cover-dark'}">${avatar}</div><div class="admin-post-copy"><div class="post-meta"><span>${isAdmin?'ADMINISTRADOR':'USUÁRIO'}</span><time>${new Date(u.created_at).toLocaleDateString('pt-BR')}</time>${self?'<b>VOCÊ</b>':''}${searchResult&&isAdmin?'<b>JÁ É ADMIN</b>':''}</div><h3>${esc(u.username)}</h3><p>${isAdmin?'Pode publicar, moderar e gerenciar acessos.':'Pode reagir e comentar nas matérias.'}</p></div><div class="admin-item-actions">${action}</div></article>`;
   }
 
   async function loadUsers(){
     // A tela principal de acessos mostra somente administradores. Usuários comuns são buscados sob demanda.
-    const {data,error}=await db.from('profiles').select('id,username,avatar_url,role,created_at').eq('role','admin').order('created_at',{ascending:true});
+    const {data,error}=await db.from('profiles').select('id,username,avatar_url,bio,role,created_at,username_changed_at').eq('role','admin').order('created_at',{ascending:true});
     if(error){console.error(error);return showToast('Erro ao carregar administradores.')}
     users=data||[];
     $('userCount').textContent=`${users.length} administrador${users.length===1?'':'es'}`;
@@ -133,12 +134,41 @@
     if(q.length<2){status.textContent='Digite pelo menos 2 caracteres para pesquisar.';return;}
     status.textContent='Pesquisando...';
     const safe=q.replace(/[%,]/g,'');
-    const {data,error}=await db.from('profiles').select('id,username,avatar_url,role,created_at').ilike('username',`%${safe}%`).order('username',{ascending:true}).limit(20);
+    const {data,error}=await db.from('profiles').select('id,username,avatar_url,bio,role,created_at,username_changed_at').ilike('username',`%${safe}%`).order('username',{ascending:true}).limit(20);
     if(error){console.error(error);status.textContent='Não foi possível pesquisar usuários agora.';return;}
     const found=data||[];
     userSearchResults=found;
     status.textContent=found.length?`${found.length} resultado${found.length===1?'':'s'}.`:'Nenhum usuário encontrado.';
     results.innerHTML=found.map(u=>userCard(u,{searchResult:true})).join('');
+  }
+
+  const auditFieldLabel={username:'nome',bio:'bio',avatar_url:'foto',role:'função'};
+  function renderManagedAvatar(profile){$('managedProfileAvatar').innerHTML=profile.avatar_url?`<img src="${esc(profile.avatar_url)}" alt="Foto de ${esc(profile.username)}">`:esc((profile.username||'U').slice(0,1).toUpperCase())}
+  async function loadManagedAudit(id){
+    const box=$('managedAuditList');box.innerHTML='<div class="audit-empty">Carregando histórico...</div>';
+    const {data,error}=await db.from('admin_profile_audit').select('actor_username,changes,created_at').eq('target_id',id).order('created_at',{ascending:false}).limit(10);
+    if(error){box.innerHTML='<div class="audit-empty">O histórico será exibido após aplicar a migração V3.8.</div>';return;}
+    box.innerHTML=(data||[]).length?data.map(a=>{const fields=Object.keys(a.changes||{}).map(k=>auditFieldLabel[k]||k).join(', ');return `<div class="audit-entry"><strong>${esc(a.actor_username||'Administrador')}</strong> alterou ${esc(fields||'o perfil')} em ${new Date(a.created_at).toLocaleString('pt-BR')}</div>`}).join(''):'<div class="audit-empty">Nenhuma alteração administrativa registrada.</div>';
+  }
+  function openManagedProfile(id){
+    const profile=[...users,...userSearchResults].find(u=>u.id===id);if(!profile)return;
+    managedProfile={...profile};$('manageProfileTitle').textContent=profile.username;$('managedProfileCreated').textContent=`Conta criada em ${new Date(profile.created_at).toLocaleDateString('pt-BR')}`;$('managedUsername').value=profile.username;$('managedBio').value=profile.bio||'';$('managedRole').value=profile.role;$('managedRole').disabled=profile.id===currentAdminId;$('managedAvatarFile').value='';$('managedRemoveAvatar').checked=false;$('managedAdminPassword').value='';$('managedProfileMessage').textContent='';renderManagedAvatar(profile);$('manageProfileModal').classList.add('open');$('manageProfileModal').setAttribute('aria-hidden','false');document.body.classList.add('modal-open');loadManagedAudit(profile.id);
+  }
+  function closeManagedProfile(){$('manageProfileModal').classList.remove('open');$('manageProfileModal').setAttribute('aria-hidden','true');$('managedAdminPassword').value='';managedProfile=null;document.body.classList.remove('modal-open')}
+  function fileToBase64(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]||'');reader.onerror=()=>reject(new Error('Não foi possível ler a imagem.'));reader.readAsDataURL(file)})}
+  async function saveManagedProfile(e){
+    e.preventDefault();if(!managedProfile)return;
+    const username=$('managedUsername').value.trim(),bio=$('managedBio').value.trim(),password=$('managedAdminPassword').value,file=$('managedAvatarFile').files?.[0];
+    if(!/^[A-Za-zÀ-ÿ0-9_. \-]+$/.test(username))return $('managedProfileMessage').textContent='Use apenas letras, números, espaço, ponto, underline ou hífen no nome.';
+    if(file&&(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>2*1024*1024))return $('managedProfileMessage').textContent='Use JPG, PNG ou WEBP com no máximo 2 MB.';
+    const btn=$('managedProfileSave');btn.disabled=true;btn.textContent='Validando e salvando...';$('managedProfileMessage').textContent='';
+    try{
+      const avatar=file?{base64:await fileToBase64(file),mimeType:file.type}:null;
+      const {data,error}=await db.functions.invoke('admin-update-profile',{body:{targetId:managedProfile.id,password,username,bio:bio||null,role:$('managedRole').value,removeAvatar:$('managedRemoveAvatar').checked,avatar}});
+      if(error)throw error;if(!data?.profile)throw new Error(data?.error||'Resposta inválida do servidor.');
+      showToast('Perfil atualizado com segurança.');closeManagedProfile();await loadUsers();if($('userSearch').value.trim().length>=2)await searchUsers();
+    }catch(err){console.error(err);let message=err?.message||'Não foi possível atualizar. Confira sua senha.';if(err?.context?.json){try{const body=await err.context.json();message=body?.error||message}catch(_){}}$('managedProfileMessage').textContent=message;}
+    finally{btn.disabled=false;btn.textContent='Salvar alterações';}
   }
 
   function preview(){const p=draft();$('previewHero').className=`article-hero ${coverMap[p.cover]||'cover-dark'} ${p.cover_image_url?'has-image':''}`;$('previewHero').innerHTML=imagePreviewMarkup(p);$('previewMeta').innerHTML=`<span>${esc(p.category)}</span><span>${new Date(p.published_at).toLocaleDateString('pt-BR')}</span><span>${esc(p.author)}</span>`;$('previewTitle').textContent=p.title||'Título da matéria';$('previewSummary').textContent=p.summary||'Resumo';$('previewScore').innerHTML=`<div><span>Índice de Lógica PXG™</span><strong>${p.score}%</strong></div><div class="meter"><span style="width:${p.score}%"></span></div>`;$('previewText').innerHTML=(p.content||'Texto da matéria.').split(/\n\s*\n/).map(x=>`<p>${esc(x)}</p>`).join('');$('previewModal').classList.add('open');document.body.classList.add('modal-open')}
@@ -152,21 +182,9 @@
   document.querySelectorAll('[data-admin-tab]').forEach(b=>b.addEventListener('click',()=>setAdminTab(b.dataset.adminTab)));
   $('storyList').addEventListener('click',async e=>{const b=e.target.closest('[data-story-status]');if(!b)return;b.disabled=true;const {error}=await db.from('story_submissions').update({status:b.dataset.storyStatus,reviewed_at:new Date().toISOString(),reviewed_by:currentAdminId}).eq('id',b.dataset.storyId);if(error){b.disabled=false;return showToast(error.message||'Não foi possível atualizar a história.');}showToast('História atualizada.');await loadStories();});
   $('reportList').addEventListener('click',async e=>{const b=e.target.closest('[data-report-status]');if(!b)return;const verb=b.dataset.reportStatus==='actioned'?'marcar como resolvida':'descartar';if(!confirm(`Deseja ${verb} esta denúncia?`))return;b.disabled=true;const {error}=await db.from('profile_reports').update({status:b.dataset.reportStatus,reviewed_at:new Date().toISOString(),reviewed_by:currentAdminId}).eq('id',b.dataset.reportId);if(error){b.disabled=false;return showToast(error.message||'Não foi possível atualizar a denúncia.');}showToast('Denúncia atualizada.');await loadReports();});
-  async function handleRoleChange(e){
-    const b=e.target.closest('[data-role-user]'); if(!b)return;
-    const user=[...users,...userSearchResults].find(u=>u.id===b.dataset.roleUser); if(!user)return;
-    const target=b.dataset.roleTarget;
-    const action=target==='admin'?'promover a administrador':'remover o acesso administrativo de';
-    if(!confirm(`Deseja ${action} ${user.username}?`))return;
-    b.disabled=true;
-    const {error}=await db.from('profiles').update({role:target}).eq('id',user.id);
-    if(error){console.error(error);showToast(error.message||'Não foi possível alterar o acesso.');b.disabled=false;return;}
-    showToast(target==='admin'?`${user.username} agora é administrador.`:`Acesso administrativo de ${user.username} removido.`);
-    await loadUsers();
-    if($('userSearch').value.trim().length>=2) await searchUsers();
-  }
-  $('userList').addEventListener('click',handleRoleChange);
-  $('userSearchResults').addEventListener('click',handleRoleChange);
+  const handleManageClick=e=>{const item=e.target.closest('[data-manage-user]');if(item)openManagedProfile(item.dataset.manageUser)};
+  $('userList').addEventListener('click',handleManageClick);$('userSearchResults').addEventListener('click',handleManageClick);
+  $('manageProfileForm').addEventListener('submit',saveManagedProfile);$('manageProfileClose').addEventListener('click',closeManagedProfile);$('manageProfileModal').addEventListener('click',e=>{if(e.target.matches('[data-close-managed-profile]'))closeManagedProfile()});
   $('userSearchBtn').addEventListener('click',searchUsers);
   $('userSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();searchUsers();}});
   let userSearchTimer=null;
