@@ -142,20 +142,25 @@
     document.querySelectorAll('.reaction-btn').forEach(b=>b.classList.remove('selected'));
     const [{data:reactions,error:rErr},{data:comments,error:cErr}]=await Promise.all([
       db.from('reactions').select('user_id,reaction').eq('post_id',activePost.id),
-      db.from('comments').select('id,user_id,content,created_at,profiles(username,avatar_url)').eq('post_id',activePost.id).order('created_at',{ascending:false})
+      db.from('comments').select('id,user_id,parent_id,content,created_at,profiles(username,avatar_url)').eq('post_id',activePost.id).order('created_at',{ascending:false})
     ]);
     if(rErr) console.error(rErr); if(cErr) console.error(cErr);
     const rs=reactions||[], cs=comments||[]; const likes=rs.filter(r=>r.reaction==='like').length, loves=rs.filter(r=>r.reaction==='love').length, funnies=rs.filter(r=>r.reaction==='funny').length;
     $('likeCount').textContent=likes; $('loveCount').textContent=loves; $('funnyCount').textContent=funnies; const total=likes+loves+funnies; $('reactionTotal').textContent=`${total} reaç${total===1?'ão':'ões'}`;
     const mine=currentUser&&rs.find(r=>r.user_id===currentUser.id); if(mine) document.querySelector(`[data-reaction="${mine.reaction}"]`)?.classList.add('selected');
-    $('commentCount').textContent=`${cs.length} comentário${cs.length===1?'':'s'}`;
-    $('commentsList').innerHTML=cs.length?cs.map(c=>{
+    const commentIds=cs.map(c=>c.id),{data:commentReactions,error:crErr}=commentIds.length?await db.from('comment_reactions').select('comment_id,user_id,reaction').in('comment_id',commentIds):{data:[],error:null};
+    if(crErr)console.error(crErr);const crs=commentReactions||[];
+    const renderComment=(c,isReply=false)=>{
       const username=c.profiles?.username||'Usuário';
       const avatar=c.profiles?.avatar_url?`<img src="${esc(c.profiles.avatar_url)}" alt="Avatar de ${esc(username)}" loading="lazy">`:esc(username.slice(0,1).toUpperCase());
       const canDelete=currentUser&&(c.user_id===currentUser.id||currentProfile?.role==='admin');
-      const canReport=REPORTS_ENABLED&&(!currentUser||c.user_id!==currentUser.id);
-      return `<article class="comment"><div class="comment-avatar">${avatar}</div><div class="comment-body"><div><strong>${esc(username)}</strong><time>${new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short'}).format(new Date(c.created_at))}</time></div><p>${esc(c.content)}</p><div class="comment-actions">${canDelete?`<button class="delete-comment" data-comment-id="${c.id}">Excluir</button>`:''}${canReport?`<button class="report-profile" data-report-user="${esc(c.user_id)}" data-report-comment="${c.id}" data-report-name="${esc(username)}">Denunciar perfil</button>`:''}</div></div></article>`;
-    }).join(''):'<div class="comment-empty">Ainda não há comentários. Um acontecimento raro na internet.</div>';
+      const commentRs=crs.filter(r=>String(r.comment_id)===String(c.id)),likes=commentRs.filter(r=>r.reaction==='like').length,dislikes=commentRs.filter(r=>r.reaction==='dislike').length,mine=currentUser&&commentRs.find(r=>r.user_id===currentUser.id)?.reaction;
+      const menu=canDelete?`<div class="comment-menu"><button class="comment-menu-trigger" data-comment-menu type="button" aria-label="Opções do comentário">•••</button><div class="comment-menu-popover"><button data-delete-comment="${c.id}" type="button">Excluir</button></div></div>`:'';
+      return `<article class="comment ${isReply?'comment-reply':''}" data-comment="${c.id}"><div class="comment-avatar">${avatar}</div><div class="comment-body"><div class="comment-head"><strong>${esc(username)}</strong><span><time>${new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short'}).format(new Date(c.created_at))}</time>${menu}</span></div><p>${esc(c.content)}</p><div class="comment-actions"><button class="comment-reaction ${mine==='like'?'selected':''}" data-comment-reaction="like" data-comment-id="${c.id}" type="button">👍 <b>${likes}</b></button><button class="comment-reaction ${mine==='dislike'?'selected':''}" data-comment-reaction="dislike" data-comment-id="${c.id}" type="button">👎 <b>${dislikes}</b></button>${!isReply?`<button class="reply-comment" data-reply-comment="${c.id}" data-reply-name="${esc(username)}" type="button">Responder</button>`:''}</div></div></article>`;
+    };
+    const roots=cs.filter(c=>!c.parent_id),replies=cs.filter(c=>c.parent_id).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+    $('commentCount').textContent=`${cs.length} comentário${cs.length===1?'':'s'}`;
+    $('commentsList').innerHTML=roots.length?roots.map(c=>`<div class="comment-thread">${renderComment(c)}<div class="comment-replies">${replies.filter(r=>String(r.parent_id)===String(c.id)).map(r=>renderComment(r,true)).join('')}</div></div>`).join(''):'<div class="comment-empty">Ainda não há comentários. Um acontecimento raro na internet.</div>';
   }
 
   function openReport(targetId,username,commentId){
@@ -194,6 +199,25 @@
     e.preventDefault(); if(!currentUser)return openAuth(); const input=$('commentInput'), content=input.value.trim(); if(!content||!activePost)return;
     const {error}=await db.from('comments').insert({post_id:activePost.id,user_id:currentUser.id,content});
     if(error)return showToast('Não foi possível publicar o comentário.'); input.value=''; showToast('Comentário publicado.'); await loadCommunity();
+  }
+
+  async function reactToComment(commentId,type){
+    if(!currentUser)return openAuth();
+    const {data:existing}=await db.from('comment_reactions').select('reaction').eq('comment_id',commentId).eq('user_id',currentUser.id).maybeSingle();let error;
+    if(existing?.reaction===type)({error}=await db.from('comment_reactions').delete().eq('comment_id',commentId).eq('user_id',currentUser.id));
+    else({error}=await db.from('comment_reactions').upsert({comment_id:Number(commentId),user_id:currentUser.id,reaction:type},{onConflict:'comment_id,user_id'}));
+    if(error)return showToast('Não foi possível registrar a reação.');await loadCommunity();
+  }
+  function openReplyForm(commentId,username){
+    if(!currentUser)return openAuth();document.querySelectorAll('.comment-reply-form').forEach(f=>f.remove());
+    const body=document.querySelector(`[data-comment="${commentId}"] .comment-body`);if(!body)return;
+    body.insertAdjacentHTML('beforeend',`<form class="comment-reply-form" data-reply-form="${commentId}"><textarea maxlength="800" required placeholder="Responder a ${esc(username)}..."></textarea><div><button class="mini-comment-btn" data-cancel-reply type="button">Cancelar</button><button class="mini-comment-btn primary" type="submit">Responder</button></div></form>`);body.querySelector('textarea').focus();
+  }
+  async function submitReply(form){
+    const content=form.querySelector('textarea').value.trim(),parentId=Number(form.dataset.replyForm);if(!content||!activePost)return;
+    const button=form.querySelector('[type="submit"]');button.disabled=true;button.textContent='Enviando...';
+    const {error}=await db.from('comments').insert({post_id:activePost.id,user_id:currentUser.id,parent_id:parentId,content});
+    if(error){button.disabled=false;button.textContent='Responder';return showToast('Não foi possível publicar a resposta.');}showToast('Resposta publicada.');await loadCommunity();
   }
 
   function openAuth(){ if(!db)return showToast('Configure o Supabase para ativar contas.'); authModal.classList.add('open'); authModal.setAttribute('aria-hidden','false'); document.body.classList.add('modal-open'); }
@@ -337,11 +361,18 @@
   $('modalClose').addEventListener('click',closePost); articleModal.addEventListener('click',e=>{if(e.target.matches('[data-close-modal]'))closePost(); const hero=e.target.closest('#modalHero.has-image'); if(hero&&activePost?.cover_image_url)openImageLightbox(activePost.cover_image_url,`Capa da matéria: ${activePost.title}`);});
   $('imageLightboxClose').addEventListener('click',closeImageLightbox); $('imageLightbox').addEventListener('click',e=>{if(e.target.matches('[data-close-image]'))closeImageLightbox();});
   document.querySelectorAll('.reaction-btn').forEach(b=>b.addEventListener('click',()=>react(b.dataset.reaction))); $('commentForm').addEventListener('submit',submitComment);
-  $('commentsList').addEventListener('click',async e=>{const report=e.target.closest('[data-report-user]');if(report){openReport(report.dataset.reportUser,report.dataset.reportName,report.dataset.reportComment);return;}const b=e.target.closest('[data-comment-id]');if(!b||!confirm('Excluir este comentário?'))return;const {error}=await db.from('comments').delete().eq('id',b.dataset.commentId);if(error)return showToast('Não foi possível excluir.');await loadCommunity();});
+  $('commentsList').addEventListener('click',async e=>{
+    const menu=e.target.closest('[data-comment-menu]');if(menu){const wrap=menu.closest('.comment-menu'),open=!wrap.classList.contains('open');document.querySelectorAll('.comment-menu.open').forEach(m=>m.classList.remove('open'));wrap.classList.toggle('open',open);return;}
+    const del=e.target.closest('[data-delete-comment]');if(del){if(!confirm('Excluir este comentário e as respostas dele?'))return;const {error}=await db.from('comments').delete().eq('id',del.dataset.deleteComment);if(error)return showToast('Não foi possível excluir.');await loadCommunity();return;}
+    const reaction=e.target.closest('[data-comment-reaction]');if(reaction){await reactToComment(reaction.dataset.commentId,reaction.dataset.commentReaction);return;}
+    const reply=e.target.closest('[data-reply-comment]');if(reply){openReplyForm(reply.dataset.replyComment,reply.dataset.replyName);return;}
+    if(e.target.closest('[data-cancel-reply]'))e.target.closest('.comment-reply-form')?.remove();
+  });
+  $('commentsList').addEventListener('submit',e=>{const form=e.target.closest('[data-reply-form]');if(!form)return;e.preventDefault();submitReply(form);});
+  document.addEventListener('click',e=>{if(!e.target.closest('.comment-menu'))document.querySelectorAll('.comment-menu.open').forEach(m=>m.classList.remove('open'));});
   $('reportForm').addEventListener('submit',submitReport); $('reportClose').addEventListener('click',closeReport); $('reportModal').addEventListener('click',e=>{if(e.target.matches('[data-close-report]'))closeReport();});
   $('menuBtn').addEventListener('click',()=>$('mainNav').classList.toggle('open'));
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('imageLightbox').classList.contains('open'))closeImageLightbox();else if(storyModal.classList.contains('open'))closeStory();else if(authModal.classList.contains('open'))closeAuth();else if(articleModal.classList.contains('open'))closePost();}});
 
   loadPosts(); syncSession(); recordAccess('Página inicial'); startAccessPresence();
 })();
-
