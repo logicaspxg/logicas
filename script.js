@@ -13,12 +13,35 @@
   let reactionStats = {};
   let reportTarget = null;
   let openStoryAfterLogin = false;
+  let visitorHashPromise = null;
+  let accessPresenceChannel = null;
 
   const $ = id => document.getElementById(id);
   const postsGrid = $('postsGrid'), filtersEl = $('categorias'), searchInput = $('searchInput'), emptyState = $('emptyState'), featuredEl = $('featuredPost'), articleModal = $('articleModal'), authModal = $('authModal'), storyModal = $('storyModal'), toast = $('toast');
   const coverMap = {red:'cover-red',yellow:'cover-yellow',blue:'cover-blue',purple:'cover-purple',green:'cover-green',dark:'cover-dark'};
   const esc = (v='') => String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[c]));
   const showToast = m => { toast.textContent=m; toast.classList.add('show'); clearTimeout(showToast.t); showToast.t=setTimeout(()=>toast.classList.remove('show'),2800); };
+  function visitorId(){
+    const key='logicas_pxg_visitor';let id=localStorage.getItem(key);
+    if(!id){id=crypto.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`;localStorage.setItem(key,id);}
+    return id;
+  }
+  async function visitorHash(){
+    if(!visitorHashPromise)visitorHashPromise=crypto.subtle.digest('SHA-256',new TextEncoder().encode(visitorId())).then(buffer=>[...new Uint8Array(buffer)].map(byte=>byte.toString(16).padStart(2,'0')).join(''));
+    return visitorHashPromise;
+  }
+  function accessSource(){
+    if(!document.referrer)return 'Direto';
+    try{const host=new URL(document.referrer).hostname.toLowerCase();if(host===location.hostname)return 'Direto';if(host.includes('google.'))return 'Google';if(/instagram|facebook|t\.co|twitter|x\.com|tiktok|youtube/.test(host))return 'Redes sociais';return 'Outros';}catch{return 'Direto';}
+  }
+  async function recordAccess(path){
+    if(!db||navigator.webdriver||/bot|crawler|spider/i.test(navigator.userAgent))return;
+    try{await db.rpc('record_access_event',{p_visitor_hash:await visitorHash(),p_path:String(path).slice(0,180),p_source:accessSource()});}catch(error){console.debug('Métrica de acesso indisponível.',error);}
+  }
+  async function startAccessPresence(){
+    if(!db||navigator.webdriver)return;
+    try{const hash=await visitorHash();accessPresenceChannel=db.channel('site-presence',{config:{presence:{key:hash}}});accessPresenceChannel.subscribe(async status=>{if(status==='SUBSCRIBED')await accessPresenceChannel.track({page:location.pathname,joined_at:new Date().toISOString()});});}catch(error){console.debug('Presença indisponível.',error);}
+  }
   const formatDate = iso => new Intl.DateTimeFormat('pt-BR',{day:'2-digit',month:'short',year:'numeric'}).format(new Date(`${iso}T12:00:00`)).replace('.','').toUpperCase();
   const normalizePost = p => ({...p, content:Array.isArray(p.content)?p.content:String(p.content||'').split(/\n\s*\n/).filter(Boolean)});
   const coverImage = (p, cls='cover-image') => p.cover_image_url ? `<img class="${cls}" src="${esc(p.cover_image_url)}" alt="Capa da matéria: ${esc(p.title)}" loading="lazy">` : '';
@@ -77,6 +100,7 @@
 
   async function openPost(id){
     const p=posts.find(x=>String(x.id)===String(id)); if(!p)return; activePost=p; lastFocused=document.activeElement;
+    recordAccess(`Matéria: ${p.title}`);
     $('modalHero').outerHTML=renderCover(p,'article').replace('<div class="article-hero','<div id="modalHero" class="article-hero');
     const date=(p.published_at||p.date||'').slice(0,10); $('modalMeta').innerHTML=`<span>${esc(p.category)}</span><span>${date?formatDate(date):''}</span><span>${esc(p.author||'Redação Lógicas PXG')}</span>`;
     $('modalTitle').textContent=p.title; $('modalSummary').textContent=p.summary; $('modalScore').innerHTML=`<div><span>Índice de Lógica PXG™</span><strong>${Number(p.score)||0}%</strong></div><div class="meter"><span style="width:${Math.min(100,Math.max(0,Number(p.score)||0))}%"></span></div>`;
@@ -318,6 +342,6 @@
   $('menuBtn').addEventListener('click',()=>$('mainNav').classList.toggle('open'));
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('imageLightbox').classList.contains('open'))closeImageLightbox();else if(storyModal.classList.contains('open'))closeStory();else if(authModal.classList.contains('open'))closeAuth();else if(articleModal.classList.contains('open'))closePost();}});
 
-  loadPosts(); syncSession();
+  loadPosts(); syncSession(); recordAccess('Página inicial'); startAccessPresence();
 })();
 

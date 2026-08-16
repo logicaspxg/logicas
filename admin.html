@@ -8,7 +8,7 @@
   <title>Painel — Lógicas PXG</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="admin.css?v=3.9">
+  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="admin.css?v=4.0">
 </head>
 <body class="admin-page admin-auth-check">
   <div class="noise"></div>
@@ -21,6 +21,7 @@
         <button class="admin-tab" type="button" role="tab" aria-selected="false" data-admin-tab="comments">Comentários</button>
         <button class="admin-tab" type="button" role="tab" aria-selected="false" data-admin-tab="stories">Histórias recebidas <span id="storyTabCount"></span></button>
         <button class="admin-tab" type="button" role="tab" aria-selected="false" data-admin-tab="users">Administradores</button>
+        <button class="admin-tab" type="button" role="tab" aria-selected="false" data-admin-tab="access">Acessos</button>
       </nav>
       <div class="admin-tab-panel admin-posts-panel" data-admin-panel="posts">
       <section class="editor-card">
@@ -44,6 +45,32 @@
           <div class="checks full"><label><input type="checkbox" id="featured"> Definir como destaque</label><label><input type="checkbox" id="published" checked> Publicada</label></div>
           <div class="editor-actions full"><button class="btn btn-secondary" type="button" id="previewBtn">Pré-visualizar</button><button class="btn btn-primary" type="submit" id="saveBtn">Publicar matéria</button></div>
         </form>
+      </section>
+      <section class="access-dashboard admin-tab-panel access-panel-nested" data-admin-panel="access" hidden>
+        <div class="access-heading">
+          <div><span class="section-kicker">VISÃO GERAL</span><h1>Acessos</h1><p>Acompanhe o alcance do site e a evolução diária da audiência.</p></div>
+          <span class="live-visitors"><i></i><strong id="onlineNow">0</strong> online agora</span>
+        </div>
+        <div class="access-kpis">
+          <article class="access-kpi"><span class="access-kpi-icon">↗</span><small>VISITANTES HOJE</small><strong id="visitorsToday">—</strong><p>Pessoas únicas no dia</p></article>
+          <article class="access-kpi"><span class="access-kpi-icon">◉</span><small>VISUALIZAÇÕES HOJE</small><strong id="viewsToday">—</strong><p>Páginas e matérias abertas</p></article>
+          <article class="access-kpi"><span class="access-kpi-icon">♙</span><small>VISITANTES ÚNICOS (30 DIAS)</small><strong id="uniqueVisitors30">—</strong><p>Alcance acumulado</p></article>
+          <article class="access-kpi"><span class="access-kpi-icon">▥</span><small>MÉDIA DIÁRIA</small><strong id="dailyAverage">—</strong><p>Visualizações por dia</p></article>
+        </div>
+        <div class="access-grid">
+          <article class="access-card access-chart-card">
+            <div class="access-card-head"><div><span class="section-kicker">ÚLTIMOS 30 DIAS</span><h2>Evolução dos acessos</h2></div><span class="chart-legend"><i></i> Visualizações</span></div>
+            <div class="access-chart" id="accessChart"><div class="access-empty">Carregando histórico...</div></div>
+          </article>
+          <article class="access-card source-card">
+            <div class="access-card-head"><div><span class="section-kicker">DESCOBERTA</span><h2>Origem dos acessos</h2></div></div>
+            <div class="source-chart-wrap"><div class="source-donut" id="sourceDonut"><span id="sourceTotal">0</span><small>acessos</small></div><div class="source-list" id="sourceList"></div></div>
+          </article>
+        </div>
+        <article class="access-card history-card">
+          <div class="access-card-head"><div><span class="section-kicker">HISTÓRICO</span><h2>Acessos por dia</h2></div><span class="post-count">Horário de Brasília</span></div>
+          <div class="access-table-wrap"><table class="access-table"><thead><tr><th>Data</th><th>Visitantes</th><th>Visualizações</th><th>Desempenho</th></tr></thead><tbody id="accessHistory"><tr><td colspan="4">Carregando histórico...</td></tr></tbody></table></div>
+        </article>
       </section>
       <section class="admin-list-card"><div class="admin-title"><div><span class="section-kicker">BANCO DE DADOS</span><h2>Matérias</h2></div><span id="postCount" class="post-count"></span></div><div id="adminPostList" class="admin-post-list"></div></section>
       </div>
@@ -70,7 +97,6 @@
   <div class="image-lightbox admin-avatar-lightbox" id="adminAvatarLightbox" aria-hidden="true"><button class="image-lightbox-close" id="adminAvatarLightboxClose" aria-label="Fechar imagem">×</button><div class="image-lightbox-backdrop" data-close-admin-avatar></div><img id="adminAvatarLightboxImage" alt="Foto de perfil ampliada"></div>
   <div class="modal" id="previewModal" aria-hidden="true"><div class="modal-backdrop" data-close-preview></div><article class="article-modal"><button class="modal-close" id="previewClose">×</button><div class="article-hero" id="previewHero"></div><div class="article-content"><div class="article-meta" id="previewMeta"></div><h2 id="previewTitle"></h2><p class="article-summary" id="previewSummary"></p><div class="article-score" id="previewScore"></div><div class="article-text" id="previewText"></div></div></article></div>
   <div class="toast" id="toast"></div>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="admin.js?v=3.9"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="admin.js?v=4.0"></script>
 </body>
 </html>
-
