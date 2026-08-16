@@ -49,3 +49,12 @@
 @media(max-width:900px){.admin-posts-panel{grid-template-columns:1fr}.admin-tabs{margin-bottom:18px}.admin-tab{flex:0 0 auto}}
 @media(max-width:620px){.admin-tabs{margin-inline:-2px}.admin-tab{padding:10px 12px}.story-item .admin-item-actions{justify-content:flex-start}}
 
+/* V3.8 — gestão protegida de perfis */
+.managed-profile-card{width:min(650px,calc(100% - 28px));max-height:92vh;overflow:auto}
+.managed-profile-head{display:flex;align-items:center;gap:16px;margin-bottom:22px;padding-right:42px}.managed-profile-head h2{font:700 26px/1 Space Grotesk;margin:7px 0}.managed-profile-head small{color:#7f8999}
+.managed-profile-avatar{width:72px;height:72px;flex:0 0 auto;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:var(--accent);color:#111;font:900 26px Space Grotesk}.managed-profile-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.managed-avatar-remove{flex-direction:row!important;align-items:center}.managed-avatar-remove input{width:auto!important}
+.managed-password-box{padding:14px;border:1px solid rgba(255,202,40,.28);background:rgba(255,202,40,.06);border-radius:12px}.managed-password-box small{display:block;margin-top:8px;color:#8c96a6}
+.managed-audit{margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}.managed-audit h3{font:700 17px Space Grotesk;margin-bottom:12px}.audit-entry{padding:10px 0;border-bottom:1px solid var(--line);font-size:11px;color:#8e98a8}.audit-entry:last-child{border-bottom:0}.audit-entry strong{color:#dce2eb}.audit-empty{font-size:12px;color:#727c8c}
+.user-item .admin-post-copy{cursor:pointer}.user-item .admin-post-copy:hover h3{color:var(--accent)}
+

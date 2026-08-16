@@ -8,7 +8,7 @@
   <title>Painel — Lógicas PXG</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="admin.css?v=3.8">
 </head>
 <body class="admin-page admin-auth-check">
   <div class="noise"></div>
@@ -66,9 +66,10 @@
     </div>
   </main>
 
+  <div class="modal" id="manageProfileModal" aria-hidden="true"><div class="modal-backdrop" data-close-managed-profile></div><section class="auth-card managed-profile-card" role="dialog" aria-modal="true" aria-labelledby="manageProfileTitle"><button class="modal-close" id="manageProfileClose" aria-label="Fechar">×</button><div class="managed-profile-head"><div class="managed-profile-avatar" id="managedProfileAvatar"></div><div><span class="section-kicker">GESTÃO DE PERFIL</span><h2 id="manageProfileTitle">Perfil do usuário</h2><small id="managedProfileCreated"></small></div></div><form id="manageProfileForm" class="auth-form"><label>Nome de usuário<input id="managedUsername" minlength="3" maxlength="24" required></label><label>Bio<textarea id="managedBio" maxlength="280" rows="4" placeholder="Biografia do perfil"></textarea></label><label>Foto de perfil <small>Opcional. JPG, PNG ou WEBP até 2 MB.</small><input id="managedAvatarFile" type="file" accept="image/jpeg,image/png,image/webp"></label><label class="managed-avatar-remove"><input id="managedRemoveAvatar" type="checkbox"> Remover a foto atual</label><label>Função<select id="managedRole"><option value="user">Usuário</option><option value="admin">Administrador</option></select></label><div class="managed-password-box"><label>Confirme com a sua senha de administrador<input id="managedAdminPassword" type="password" autocomplete="current-password" required></label><small>A senha valida esta operação e nunca é armazenada no histórico.</small></div><button class="btn btn-primary" id="managedProfileSave" type="submit">Salvar alterações</button></form><p class="auth-message" id="managedProfileMessage" aria-live="polite"></p><div class="managed-audit"><h3>Histórico administrativo</h3><div id="managedAuditList"></div></div></section></div>
   <div class="modal" id="previewModal" aria-hidden="true"><div class="modal-backdrop" data-close-preview></div><article class="article-modal"><button class="modal-close" id="previewClose">×</button><div class="article-hero" id="previewHero"></div><div class="article-content"><div class="article-meta" id="previewMeta"></div><h2 id="previewTitle"></h2><p class="article-summary" id="previewSummary"></p><div class="article-score" id="previewScore"></div><div class="article-text" id="previewText"></div></div></article></div>
   <div class="toast" id="toast"></div>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="admin.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="admin.js?v=3.8"></script>
 </body>
 </html>
 
