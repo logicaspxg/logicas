@@ -113,12 +113,13 @@
   function userCard(u,{searchResult=false}={}){
     const self=u.id===currentAdminId; const isAdmin=u.role==='admin';
     const action=self?'<span class="self-role">Seu acesso</span>':`<button class="mini-btn ${isAdmin?'danger':''}" data-role-user="${u.id}" data-role-target="${isAdmin?'user':'admin'}">${isAdmin?'Remover admin':'Tornar admin'}</button>`;
-    return `<article class="admin-post-item user-item"><div class="admin-post-icon ${isAdmin?'cover-yellow':'cover-dark'}">${isAdmin?'🛡️':'👤'}</div><div class="admin-post-copy"><div class="post-meta"><span>${isAdmin?'ADMINISTRADOR':'USUÁRIO'}</span><time>${new Date(u.created_at).toLocaleDateString('pt-BR')}</time>${self?'<b>VOCÊ</b>':''}${searchResult&&isAdmin?'<b>JÁ É ADMIN</b>':''}</div><h3>${esc(u.username)}</h3><p>${isAdmin?'Pode publicar, moderar e gerenciar acessos.':'Pode reagir e comentar nas matérias.'}</p></div><div class="admin-item-actions">${action}</div></article>`;
+    const avatar=u.avatar_url?`<img src="${esc(u.avatar_url)}" alt="Foto de perfil de ${esc(u.username)}" loading="lazy">`:(isAdmin?'🛡️':'👤');
+    return `<article class="admin-post-item user-item"><div class="admin-post-icon user-avatar ${isAdmin?'cover-yellow':'cover-dark'}">${avatar}</div><div class="admin-post-copy"><div class="post-meta"><span>${isAdmin?'ADMINISTRADOR':'USUÁRIO'}</span><time>${new Date(u.created_at).toLocaleDateString('pt-BR')}</time>${self?'<b>VOCÊ</b>':''}${searchResult&&isAdmin?'<b>JÁ É ADMIN</b>':''}</div><h3>${esc(u.username)}</h3><p>${isAdmin?'Pode publicar, moderar e gerenciar acessos.':'Pode reagir e comentar nas matérias.'}</p></div><div class="admin-item-actions">${action}</div></article>`;
   }
 
   async function loadUsers(){
     // A tela principal de acessos mostra somente administradores. Usuários comuns são buscados sob demanda.
-    const {data,error}=await db.from('profiles').select('id,username,role,created_at').eq('role','admin').order('created_at',{ascending:true});
+    const {data,error}=await db.from('profiles').select('id,username,avatar_url,role,created_at').eq('role','admin').order('created_at',{ascending:true});
     if(error){console.error(error);return showToast('Erro ao carregar administradores.')}
     users=data||[];
     $('userCount').textContent=`${users.length} administrador${users.length===1?'':'es'}`;
@@ -132,7 +133,7 @@
     if(q.length<2){status.textContent='Digite pelo menos 2 caracteres para pesquisar.';return;}
     status.textContent='Pesquisando...';
     const safe=q.replace(/[%,]/g,'');
-    const {data,error}=await db.from('profiles').select('id,username,role,created_at').ilike('username',`%${safe}%`).order('username',{ascending:true}).limit(20);
+    const {data,error}=await db.from('profiles').select('id,username,avatar_url,role,created_at').ilike('username',`%${safe}%`).order('username',{ascending:true}).limit(20);
     if(error){console.error(error);status.textContent='Não foi possível pesquisar usuários agora.';return;}
     const found=data||[];
     userSearchResults=found;
