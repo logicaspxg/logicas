@@ -12,6 +12,8 @@
   let managedProfile=null;
   let accessLoaded=false;
   let accessPresenceChannel=null;
+  let historyMonthOffset=0;
+  let historyExpanded=false;
   const MAX_COVER_BYTES=8*1024*1024;
   const ALLOWED_COVER_TYPES=new Set(['image/jpeg','image/png','image/webp','image/gif']);
 
@@ -132,13 +134,29 @@
     const max=Math.max(...days.map(d=>Number(d.views)||0),1);
     $('accessHistory').innerHTML=days.length?[...days].reverse().map(d=>`<tr><td><strong>${new Date(`${d.day}T12:00:00`).toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})}</strong></td><td>${numberBR(d.visitors)}</td><td>${numberBR(d.views)}</td><td><span class="history-meter"><i style="width:${Math.round(Number(d.views)*100/max)}%"></i></span></td></tr>`).join(''):'<tr><td colspan="4">Ainda não há acessos registrados.</td></tr>';
   }
+  function historyRange(){
+    const now=new Date(),end=new Date(now.getFullYear(),now.getMonth()+historyMonthOffset+1,0,12);
+    if(historyMonthOffset===0)end.setDate(now.getDate());
+    const monthStart=new Date(end.getFullYear(),end.getMonth(),1,12),start=new Date(end);
+    start.setDate(end.getDate()-(historyExpanded?29:14));
+    if(start<monthStart)start.setTime(monthStart.getTime());
+    const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    return {start:iso(start),end:iso(end),label:end.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})};
+  }
+  async function loadAccessHistory(){
+    const range=historyRange();$('historyPeriod').textContent=range.label;$('historyNext').disabled=historyMonthOffset===0;$('historyMore').textContent=historyExpanded?'Mostrar 15 dias':'Ver mais';
+    $('accessHistory').innerHTML='<tr><td colspan="4">Carregando histórico...</td></tr>';
+    const {data,error}=await db.rpc('admin_access_history',{p_start_date:range.start,p_end_date:range.end});
+    if(error){console.error(error);$('accessHistory').innerHTML='<tr><td colspan="4">Aplique a migração V4.1 para navegar pelo histórico.</td></tr>';return;}
+    renderAccessHistory(Array.isArray(data)?data:[]);
+  }
   async function loadAccessAnalytics(){
     accessLoaded=true;$('accessChart').innerHTML='<div class="access-empty">Carregando histórico...</div>';
     const {data,error}=await db.rpc('admin_access_analytics',{p_days:30});
     if(error){console.error(error);accessLoaded=false;$('accessChart').innerHTML='<div class="access-empty">Aplique a migração V4.0 para ativar os dados de acesso.</div>';return;}
     const stats=data||{},days=Array.isArray(stats.daily)?stats.daily:[],sources=Array.isArray(stats.sources)?stats.sources:[];
     $('visitorsToday').textContent=numberBR(stats.visitors_today);$('viewsToday').textContent=numberBR(stats.views_today);$('uniqueVisitors30').textContent=numberBR(stats.unique_visitors);$('dailyAverage').textContent=numberBR(stats.daily_average);
-    renderAccessChart(days);renderSources(sources);renderAccessHistory(days);
+    renderAccessChart(days);renderSources(sources);await loadAccessHistory();
   }
   function startAccessPresence(){
     accessPresenceChannel=db.channel('site-presence',{config:{presence:{key:`admin-${currentAdminId}`}}}).on('presence',{event:'sync'},()=>{
@@ -245,6 +263,9 @@
     },350);
   });
   $('logoutBtn').addEventListener('click',async()=>{await db.auth.signOut();location.href='index.html'});
+  $('historyPrevious').addEventListener('click',()=>{historyMonthOffset-=1;historyExpanded=false;loadAccessHistory();});
+  $('historyNext').addEventListener('click',()=>{if(historyMonthOffset>=0)return;historyMonthOffset+=1;historyExpanded=false;loadAccessHistory();});
+  $('historyMore').addEventListener('click',()=>{historyExpanded=!historyExpanded;loadAccessHistory();});
   setInterval(()=>{if(accessLoaded&&!document.querySelector('[data-admin-panel="access"]').hidden)loadAccessAnalytics();},60000);
   boot();
 })();
