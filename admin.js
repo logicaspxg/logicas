@@ -10,6 +10,8 @@
   let userSearchResults=[];
   let currentAdminId=null;
   let managedProfile=null;
+  let accessLoaded=false;
+  let accessPresenceChannel=null;
   const MAX_COVER_BYTES=8*1024*1024;
   const ALLOWED_COVER_TYPES=new Set(['image/jpeg','image/png','image/webp','image/gif']);
 
@@ -34,6 +36,7 @@
       $('adminShell').hidden=false;
       $('logoutBtn').hidden=false;
       setDefaultDate();
+      startAccessPresence();
       if(REPORTS_ENABLED)$('reportsCard').hidden=false;
       await Promise.all([loadPosts(),loadComments(),loadStories(),REPORTS_ENABLED?loadReports():Promise.resolve(),loadUsers()]);
     } catch (err) {
@@ -101,7 +104,49 @@
     $('storyList').innerHTML=stories.length?stories.map(s=>`<article class="admin-post-item story-item"><div class="admin-post-icon ${s.status==='new'?'cover-yellow':'cover-dark'}">💡</div><div class="admin-post-copy"><div class="post-meta"><span>${esc(storyStatusLabel[s.status]||s.status)}</span><time>${new Date(s.created_at).toLocaleString('pt-BR')}</time></div><h3>${esc(s.subject)}</h3><p><strong>${esc(s.profiles?.username||'Usuário removido')}:</strong> ${esc(s.story)}</p></div><div class="admin-item-actions">${s.status==='new'?`<button class="mini-btn" data-story-status="read" data-story-id="${s.id}">Marcar lida</button>`:''}${s.status!=='used'?`<button class="mini-btn" data-story-status="used" data-story-id="${s.id}">Aproveitar</button>`:''}${s.status!=='archived'?`<button class="mini-btn danger" data-story-status="archived" data-story-id="${s.id}">Arquivar</button>`:''}</div></article>`).join(''):'<div class="empty-state" style="display:block">Nenhuma história recebida.</div>';
   }
 
-  function setAdminTab(tab){document.querySelectorAll('[data-admin-tab]').forEach(b=>{const active=b.dataset.adminTab===tab;b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active));});document.querySelectorAll('[data-admin-panel]').forEach(p=>p.hidden=p.dataset.adminPanel!==tab);}
+  function setAdminTab(tab){
+    document.querySelectorAll('[data-admin-tab]').forEach(b=>{const active=b.dataset.adminTab===tab;b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active));});
+    const postsPanel=document.querySelector('.admin-posts-panel');
+    postsPanel.classList.toggle('access-mode',tab==='access');
+    document.querySelectorAll('[data-admin-panel]').forEach(p=>{p.hidden=p.dataset.adminPanel!==tab&&!(tab==='access'&&p===postsPanel);});
+    if(tab==='access'&&!accessLoaded)loadAccessAnalytics();
+  }
+
+  const numberBR=value=>new Intl.NumberFormat('pt-BR').format(Number(value)||0);
+  function renderAccessChart(days){
+    const box=$('accessChart');if(!days.length){box.innerHTML='<div class="access-empty">Ainda não há acessos registrados.</div>';return;}
+    const values=days.map(d=>Number(d.views)||0),max=Math.max(...values,1),w=900,h=260,padX=28,padY=24;
+    const points=values.map((v,i)=>{const x=padX+(i/(Math.max(values.length-1,1)))*(w-padX*2),y=h-padY-(v/max)*(h-padY*2);return [x,y];});
+    const line=points.map(p=>p.join(',')).join(' '),area=`${padX},${h-padY} ${line} ${w-padX},${h-padY}`;
+    const labels=days.map((d,i)=>i%5===0||i===days.length-1?`<text x="${points[i][0]}" y="252" text-anchor="middle">${new Date(`${d.day}T12:00:00`).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}</text>`:'').join('');
+    const dots=points.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="3"><title>${new Date(`${days[i].day}T12:00:00`).toLocaleDateString('pt-BR')}: ${numberBR(values[i])} visualizações</title></circle>`).join('');
+    box.innerHTML=`<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Visualizações nos últimos 30 dias"><defs><linearGradient id="accessFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffca28" stop-opacity=".28"/><stop offset="1" stop-color="#ffca28" stop-opacity="0"/></linearGradient></defs><g class="chart-grid"><line x1="${padX}" y1="${padY}" x2="${w-padX}" y2="${padY}"/><line x1="${padX}" y1="${h/2}" x2="${w-padX}" y2="${h/2}"/><line x1="${padX}" y1="${h-padY}" x2="${w-padX}" y2="${h-padY}"/></g><polygon class="chart-area" points="${area}"/><polyline class="chart-line" points="${line}"/>${dots}<g class="chart-labels">${labels}</g></svg>`;
+  }
+  function renderSources(sources){
+    const colors=['#ffca28','#ff7849','#6f7bf7','#46c2a0'],total=sources.reduce((sum,s)=>sum+Number(s.views||0),0);let cursor=0;
+    const stops=sources.map((s,i)=>{const start=cursor,end=cursor+(total?Number(s.views)*100/total:0);cursor=end;return `${colors[i%colors.length]} ${start}% ${end}%`;});
+    $('sourceDonut').style.background=stops.length?`conic-gradient(${stops.join(',')})`:'#252933';$('sourceTotal').textContent=numberBR(total);
+    $('sourceList').innerHTML=sources.length?sources.map((s,i)=>`<div><i style="background:${colors[i%colors.length]}"></i><span>${esc(s.source)}</span><strong>${total?Math.round(Number(s.views)*100/total):0}%</strong></div>`).join(''):'<p class="access-empty">Sem dados de origem.</p>';
+  }
+  function renderAccessHistory(days){
+    const max=Math.max(...days.map(d=>Number(d.views)||0),1);
+    $('accessHistory').innerHTML=days.length?[...days].reverse().map(d=>`<tr><td><strong>${new Date(`${d.day}T12:00:00`).toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})}</strong></td><td>${numberBR(d.visitors)}</td><td>${numberBR(d.views)}</td><td><span class="history-meter"><i style="width:${Math.round(Number(d.views)*100/max)}%"></i></span></td></tr>`).join(''):'<tr><td colspan="4">Ainda não há acessos registrados.</td></tr>';
+  }
+  async function loadAccessAnalytics(){
+    accessLoaded=true;$('accessChart').innerHTML='<div class="access-empty">Carregando histórico...</div>';
+    const {data,error}=await db.rpc('admin_access_analytics',{p_days:30});
+    if(error){console.error(error);accessLoaded=false;$('accessChart').innerHTML='<div class="access-empty">Aplique a migração V4.0 para ativar os dados de acesso.</div>';return;}
+    const stats=data||{},days=Array.isArray(stats.daily)?stats.daily:[],sources=Array.isArray(stats.sources)?stats.sources:[];
+    $('visitorsToday').textContent=numberBR(stats.visitors_today);$('viewsToday').textContent=numberBR(stats.views_today);$('uniqueVisitors30').textContent=numberBR(stats.unique_visitors);$('dailyAverage').textContent=numberBR(stats.daily_average);
+    renderAccessChart(days);renderSources(sources);renderAccessHistory(days);
+  }
+  function startAccessPresence(){
+    accessPresenceChannel=db.channel('site-presence',{config:{presence:{key:`admin-${currentAdminId}`}}}).on('presence',{event:'sync'},()=>{
+      const state=accessPresenceChannel.presenceState();
+      const visitors=Object.keys(state).filter(key=>!key.startsWith('admin-')).length;
+      $('onlineNow').textContent=numberBR(visitors);
+    }).subscribe();
+  }
 
   const reportReasonLabel={inappropriate_content:'Conteúdo impróprio',harassment:'Assédio ou ameaça',spam:'Spam',impersonation:'Falsidade ideológica',other:'Outro motivo'};
   async function loadReports(){
@@ -200,6 +245,6 @@
     },350);
   });
   $('logoutBtn').addEventListener('click',async()=>{await db.auth.signOut();location.href='index.html'});
+  setInterval(()=>{if(accessLoaded&&!document.querySelector('[data-admin-panel="access"]').hidden)loadAccessAnalytics();},60000);
   boot();
 })();
-
