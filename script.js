@@ -1,5 +1,6 @@
 (() => {
   const cfg = window.LOGICAS_PXG_CONFIG || {};
+  const REPORTS_ENABLED = false; // Reative junto com o GRANT INSERT documentado na migração V3.6.1.
   const configured = cfg.supabaseUrl && cfg.supabaseAnonKey && !cfg.supabaseUrl.includes('COLE_AQUI') && !cfg.supabaseAnonKey.includes('COLE_AQUI');
   const db = configured && window.supabase ? window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey) : null;
   const demoPosts = Array.isArray(window.LOGICAS_PXG_POSTS) ? [...window.LOGICAS_PXG_POSTS] : [];
@@ -108,12 +109,13 @@
       const username=c.profiles?.username||'Usuário';
       const avatar=c.profiles?.avatar_url?`<img src="${esc(c.profiles.avatar_url)}" alt="Avatar de ${esc(username)}" loading="lazy">`:esc(username.slice(0,1).toUpperCase());
       const canDelete=currentUser&&(c.user_id===currentUser.id||currentProfile?.role==='admin');
-      const canReport=!currentUser||c.user_id!==currentUser.id;
+      const canReport=REPORTS_ENABLED&&(!currentUser||c.user_id!==currentUser.id);
       return `<article class="comment"><div class="comment-avatar">${avatar}</div><div class="comment-body"><div><strong>${esc(username)}</strong><time>${new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short'}).format(new Date(c.created_at))}</time></div><p>${esc(c.content)}</p><div class="comment-actions">${canDelete?`<button class="delete-comment" data-comment-id="${c.id}">Excluir</button>`:''}${canReport?`<button class="report-profile" data-report-user="${esc(c.user_id)}" data-report-comment="${c.id}" data-report-name="${esc(username)}">Denunciar perfil</button>`:''}</div></div></article>`;
     }).join(''):'<div class="comment-empty">Ainda não há comentários. Um acontecimento raro na internet.</div>';
   }
 
   function openReport(targetId,username,commentId){
+    if(!REPORTS_ENABLED)return showToast('As denúncias estão desativadas.');
     if(!currentUser)return openAuth();
     if(targetId===currentUser.id)return showToast('Você não pode denunciar o próprio perfil.');
     reportTarget={targetId,username,commentId:Number(commentId)||null};
