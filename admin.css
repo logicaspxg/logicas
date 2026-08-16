@@ -35,3 +35,15 @@
 .cover-image-current span{font-size:12px;color:#aab1bf;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cover-image-remove{align-self:flex-start}
 
+/* V3.7 — painel organizado por abas */
+.admin-shell{display:block}
+.admin-tabs{display:flex;gap:8px;overflow-x:auto;margin-bottom:24px;padding:5px;background:#0d0f14;border:1px solid var(--line);border-radius:14px}
+.admin-tab{flex:1;min-width:max-content;border:0;background:transparent;color:#8992a2;border-radius:10px;padding:12px 16px;font:800 12px Inter;cursor:pointer}
+.admin-tab:hover{color:#fff}.admin-tab.active{background:#222630;color:#fff;box-shadow:0 5px 18px rgba(0,0,0,.2)}
+.admin-tab span{color:var(--accent)}
+.admin-posts-panel{display:grid;grid-template-columns:1.05fr .95fr;gap:24px;align-items:start}
+.admin-tab-panel:not(.admin-posts-panel){width:100%}
+.story-item{align-items:start}.story-item .admin-post-copy p{line-height:1.65;white-space:pre-wrap}.story-item .admin-item-actions{flex-wrap:wrap;justify-content:flex-end}
+@media(max-width:900px){.admin-posts-panel{grid-template-columns:1fr}.admin-tabs{margin-bottom:18px}.admin-tab{flex:0 0 auto}}
+@media(max-width:620px){.admin-tabs{margin-inline:-2px}.admin-tab{padding:10px 12px}.story-item .admin-item-actions{justify-content:flex-start}}
+
