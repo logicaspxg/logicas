@@ -175,7 +175,7 @@
   async function syncSession(){
     if(!db){ $('accountBtn').textContent='Entrar'; return; }
     const {data:{session}}=await db.auth.getSession(); currentUser=session?.user||null; currentProfile=null;
-    if(currentUser){ const {data}=await db.from('profiles').select('id,username,role').eq('id',currentUser.id).single(); currentProfile=data||null; }
+    if(currentUser){ const {data}=await db.from('profiles').select('id,username,role,avatar_url,bio,created_at,username_changed_at').eq('id',currentUser.id).single(); currentProfile=data||null; }
     renderAccount(); if(activePost) await loadCommunity();
   }
   function renderAccount(){
@@ -184,8 +184,17 @@
     btn.textContent=`👤 ${currentProfile?.username||'Minha conta'}`;
     $('accountName').textContent=currentProfile?.username||'Usuário';
     $('accountEmail').textContent=currentUser.email||'';
-    // O link administrativo só existe no DOM quando o banco confirma role = admin.
+    // Links privados só existem no DOM depois que a sessão é confirmada.
+    document.getElementById('profileLink')?.remove();
     document.getElementById('adminLink')?.remove();
+
+    const profileLink=document.createElement('a');
+    profileLink.id='profileLink';
+    profileLink.href='perfil.html';
+    profileLink.textContent='👤 Editar perfil';
+    menu.insertBefore(profileLink, $('logoutBtn'));
+
+    // O link administrativo só existe quando o banco confirma role = admin.
     if(currentProfile?.role==='admin'){
       const adminLink=document.createElement('a');
       adminLink.id='adminLink';
