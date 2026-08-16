@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meu perfil — Lógicas PXG</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" type="image/png" sizes="512x512" href="favicon.png">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="profile-page">
+  <div class="noise"></div>
+  <main class="profile-shell" id="profileApp" hidden>
+    <div class="profile-top">
+      <a class="brand" href="index.html"><span class="brand-mark">L</span><span class="brand-text">Lógicas <strong>PXG</strong></span></a>
+      <a class="profile-back" href="index.html">← Voltar para o site</a>
+    </div>
+
+    <div class="profile-grid">
+      <aside class="profile-card profile-avatar-wrap">
+        <div class="profile-avatar" id="avatarPreview"><span id="avatarInitial">?</span></div>
+        <h2 id="profileDisplayName">Meu perfil</h2>
+        <span class="profile-role" id="profileRole">usuário</span>
+        <p class="profile-created" id="profileCreated"></p>
+
+        <div class="avatar-actions">
+          <label class="btn btn-secondary" for="avatarInput">Trocar avatar</label>
+          <input class="avatar-file" id="avatarInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
+          <button class="btn btn-secondary" id="removeAvatarBtn" type="button">Remover</button>
+        </div>
+        <p class="profile-help">JPG, PNG, WEBP ou GIF. Máximo de 3 MB.</p>
+      </aside>
+
+      <section class="profile-card">
+        <span class="section-kicker">CONTA DA COMUNIDADE</span>
+        <h1 style="margin:7px 0 22px;font:800 34px Space Grotesk">Editar perfil</h1>
+
+        <form class="profile-form" id="profileForm">
+          <label>
+            Nome de usuário
+            <input id="profileUsername" type="text" minlength="3" maxlength="24" required>
+            <span class="profile-help">É o nome exibido nos comentários. Não precisa — e é melhor que não seja — seu nick da PXG.</span>
+          </label>
+
+          <div class="profile-cooldown" id="usernameCooldown"></div>
+
+          <label>
+            Bio
+            <textarea id="profileBio" maxlength="180" placeholder="Ex.: sobrevivente profissional de updates inexplicáveis."></textarea>
+            <span class="profile-help"><span id="bioCount">0</span>/180 caracteres</span>
+          </label>
+
+          <label>
+            E-mail
+            <input id="profileEmail" type="email" readonly>
+            <span class="profile-help">O e-mail não é público. Alteração de e-mail não é feita por esta página.</span>
+          </label>
+
+          <p class="profile-status" id="profileStatus" aria-live="polite"></p>
+
+          <div class="profile-actions">
+            <a class="btn btn-secondary" href="index.html">Cancelar</a>
+            <button class="btn btn-primary" id="saveProfileBtn" type="submit">Salvar alterações</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="perfil.js"></script>
+</body>
+</html>
