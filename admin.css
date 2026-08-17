@@ -45,7 +45,7 @@
 .admin-tab span{color:var(--accent)}
 .admin-posts-panel{display:grid;grid-template-columns:1.05fr .95fr;gap:24px;align-items:start}
 .admin-tab-panel:not(.admin-posts-panel){width:100%}
-.story-item{align-items:start}.story-item .admin-post-copy p{line-height:1.65;white-space:pre-wrap}.story-item .admin-item-actions{flex-wrap:wrap;justify-content:flex-end}
+.story-item{align-items:start}.story-item .admin-post-copy p{line-height:1.65;white-space:pre-wrap}.story-item .admin-item-actions{flex-wrap:wrap;justify-content:flex-end}.story-message{display:-webkit-box;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2}.story-message.expanded{display:block;overflow:visible;-webkit-line-clamp:unset;line-clamp:unset}.story-toggle{display:inline-flex;margin-top:7px;padding:0;border:0;background:transparent;color:var(--accent);font:800 11px Inter;cursor:pointer}.story-toggle:hover{text-decoration:underline}.story-toggle[hidden]{display:none}
 @media(max-width:900px){.admin-posts-panel{grid-template-columns:1fr}.admin-tabs{margin-bottom:18px}.admin-tab{flex:0 0 auto}}
 @media(max-width:620px){.admin-tabs{margin-inline:-2px}.admin-tab{padding:10px 12px}.story-item .admin-item-actions{justify-content:flex-start}}
 
@@ -69,3 +69,4 @@
 .history-card-head>div:first-child .post-count{display:block;margin-top:7px}.history-controls{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}.history-controls>strong{min-width:132px;text-align:center;text-transform:capitalize;font:700 12px Space Grotesk;color:#dfe4ec}.history-arrow{width:34px;height:34px;border:1px solid var(--line);border-radius:9px;background:#171a22;color:#fff;font-size:16px;cursor:pointer}.history-arrow:hover:not(:disabled){border-color:#555d70;color:var(--accent)}.history-arrow:disabled{opacity:.35;cursor:not-allowed}.history-more{margin-left:4px}
 @media(max-width:1050px){.access-kpis{grid-template-columns:repeat(2,1fr)}.access-grid{grid-template-columns:1fr}.source-chart-wrap{flex-direction:row}.source-donut{flex:0 0 auto}}
 @media(max-width:620px){.access-heading{flex-direction:column}.access-kpis{grid-template-columns:1fr}.access-kpi{min-height:130px}.access-card{padding:18px}.source-chart-wrap{flex-direction:column}.access-chart{height:230px}.history-card-head{flex-direction:column}.history-controls{width:100%;justify-content:flex-start}.history-more{flex:1}.history-controls>strong{min-width:115px}}
+
